@@ -1,5 +1,7 @@
+import type { ReactNode } from 'react'
+
 import type { ConfigSiteResolue } from '../config'
-import type { ContexteRendu } from '../types'
+import type { BlocExterne, ContexteRendu } from '../types'
 
 export type ProprietesBloc<T> = {
   bloc: T
@@ -12,6 +14,18 @@ export type ProprietesBloc<T> = {
    */
   premier?: boolean
 }
+
+/**
+ * Rendu d'un bloc apporte par un module, enregistre par `blockType`.
+ *
+ * Les modules fournissent leur registre a `RenderBlocks` ; le socle ne connait
+ * que la signature, jamais l'implementation.
+ */
+export type RenduBlocExterne = (
+  proprietes: ProprietesBloc<BlocExterne>,
+) => ReactNode | Promise<ReactNode>
+
+export type RegistreBlocs = Record<string, RenduBlocExterne>
 
 /** Attribut `sizes` adapte a une grille responsive, pour eviter de servir du 1920 px sur mobile. */
 export const taillesGrille = (colonnes: '2' | '3' | '4'): string => {

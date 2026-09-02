@@ -1,17 +1,33 @@
-import { SLUG_ACCUEIL, lienProduit, listerPagesPubliees, segmentProduits } from '@websparks/core'
+import { FormulaireCommande, PageConfirmationCommande } from '@websparks/commande/blocks'
+import { SEGMENT_CONFIRMATION } from '@websparks/commande/routes'
+import {
+  SLUG_ACCUEIL,
+  lienProduit,
+  listerPagesPubliees,
+  segmentCommande,
+  segmentProduits,
+} from '@websparks/core'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
 import { FicheProduit } from '@/composants/FicheProduit'
 import { ListeProduits } from '@/composants/ListeProduits'
 import { PageCms } from '@/composants/PageCms'
-import { clientPayload, resoudreLangue } from '@/lib/contexte'
+import { clientPayload, obtenirContexte, resoudreLangue } from '@/lib/contexte'
 import { metadonneesPage, metadonneesProduit } from '@/lib/metadonnees'
 import { site } from '@/site.config'
 
 type Parametres = {
   params: Promise<{ locale: string; slug?: string[] }>
-  searchParams: Promise<{ categorie?: string; page?: string }>
+  searchParams: Promise<{
+    categorie?: string
+    page?: string
+    erreur?: string
+    detail?: string
+    panier?: string
+    numero?: string
+    jeton?: string
+  }>
 }
 
 /**
@@ -28,6 +44,15 @@ const analyser = (langue: ReturnType<typeof resoudreLangue>, segments: string[])
   if (segments[0] === segment) {
     if (segments.length === 1) return { type: 'liste-produits' as const }
     if (segments.length === 2) return { type: 'produit' as const, slug: segments[1] as string }
+    return { type: 'inconnu' as const }
+  }
+
+  // Section commande, présente uniquement si le module est activé.
+  if (site.modules?.commande && segments[0] === segmentCommande(site, langue)) {
+    if (segments.length === 1) return { type: 'commande' as const }
+    if (segments.length === 2 && segments[1] === SEGMENT_CONFIRMATION) {
+      return { type: 'confirmation-commande' as const }
+    }
     return { type: 'inconnu' as const }
   }
 
@@ -81,6 +106,12 @@ export const generateMetadata = async ({ params }: Parametres): Promise<Metadata
 
   if (route.type === 'page') return metadonneesPage(langue, route.slug)
 
+  if (route.type === 'commande' || route.type === 'confirmation-commande') {
+    // Une page de commande n'a rien à faire dans un index de recherche : son
+    // contenu dépend de l'heure, et la confirmation est propre à un client.
+    return { robots: { index: false, follow: false } }
+  }
+
   return {}
 }
 
@@ -96,6 +127,33 @@ const PageDynamique = async ({ params, searchParams }: Parametres) => {
     }
     case 'produit':
       return <FicheProduit langue={langue} slug={route.slug} />
+    case 'commande': {
+      // Lire les paramètres suffit à sortir du rendu statique : les créneaux
+      // dépendent de l'instant et ne doivent jamais être servis depuis un cache.
+      const { erreur, detail, panier } = await searchParams
+      const contexte = await obtenirContexte(langue)
+      return (
+        <FormulaireCommande
+          config={site}
+          contexte={contexte}
+          erreur={erreur}
+          detail={detail}
+          panier={panier}
+        />
+      )
+    }
+    case 'confirmation-commande': {
+      const { numero, jeton } = await searchParams
+      const contexte = await obtenirContexte(langue)
+      return (
+        <PageConfirmationCommande
+          config={site}
+          contexte={contexte}
+          numero={numero}
+          jeton={jeton}
+        />
+      )
+    }
     case 'page':
       return <PageCms langue={langue} slug={route.slug} />
     default:

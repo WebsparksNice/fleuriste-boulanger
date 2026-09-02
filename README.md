@@ -41,6 +41,40 @@ Puis, dans la copie :
 Le reste vient du socle (code) et de Payload (contenu). **Aucune donnée client
 n'est écrite en dur dans `packages/core`.**
 
+## Modules optionnels
+
+`packages/commande` — click & collect avec créneaux de retrait, paiement Stripe
+ou sur place. Un client qui n'en veut pas ne déclare pas la dépendance : rien
+de ce module n'entre alors dans son application.
+
+Pour l'activer :
+
+1. `pnpm --filter <app> add @websparks/commande --workspace`
+2. `site.config.ts` — `modules: { commande: true }` et le segment d'URL
+3. `payload.config.ts` — brancher `creerModuleCommande()` sur les points
+   d'extension du socle
+4. copier `src/commande.config.ts` et les routes `app/(payload)/api/commande/*`
+5. renseigner `STRIPE_*` et `RESEND_API_KEY` dans `.env`
+
+Voir `apps/demo-boulangerie` pour le branchement complet.
+
+### Points d'extension du socle
+
+Le module n'a rien modifié du socle ; il se greffe sur six points prévus pour
+lui, tous facultatifs et sans effet quand ils ne sont pas renseignés :
+
+| Point | Où | Sert à |
+|---|---|---|
+| `ConfigSite.modules` + `routes.commande` | `config/` | savoir si la section existe et sous quelle URL |
+| `creerConfigCore({ blocsSupplementaires })` | `payload/` | ajouter des blocs de page |
+| `optionsProduits.ongletSupplementaire` | `payload/` | ajouter un onglet à la fiche produit |
+| `creerConfigCore({ vuesAdmin })` | `payload/` | ajouter une vue d'administration |
+| `RenderBlocks({ rendus })` | `blocks/` | fournir le rendu React des blocs ajoutés |
+| `SiteLayout({ actionsEnTete })` | `layout/` | poser un bouton dans l'en-tête |
+
+Les deux points déjà présents en phase 1 — `collectionsSupplementaires` et
+`globalesSupplementaires` — servaient déjà à cela.
+
 ## Le socle en bref
 
 | Chemin | Contenu |
@@ -77,6 +111,21 @@ la galerie, chargée en différé et uniquement si l'éditeur coche
 aussi, le filtre produits passe par des liens. Reste le socle Next lui-même
 (~190 Ko gzip), qui n'est pas retirable en App Router.
 
+## Commandes : ce sur quoi reposent les garanties
+
+- **Les créneaux sont calculés côté serveur**, par la même fonction à
+  l'affichage et à la validation. Un créneau fabriqué à la main ne passe pas.
+- **La capacité tient à un index unique** sur `(creneau, position)`, pas à un
+  comptage. Deux clients qui visent la dernière place ne peuvent pas la prendre
+  tous les deux : le perdant heurte la contrainte et sa transaction est rejouée.
+- **Les prix sont relus en base** à chaque commande. Le formulaire n'envoie que
+  des identifiants et des quantités.
+- **Le webhook Stripe est idempotent** : l'identifiant d'événement est unique en
+  base, une seconde livraison n'a rien à refaire.
+- **Tout est en Europe/Paris**, changements d'heure compris : une heure qui
+  n'existe pas n'est jamais proposée, une heure vécue deux fois n'est pas
+  dupliquée. Couvert par 25 tests unitaires.
+
 ## Points d'attention
 
 - `src/app/robots.ts` et `src/app/sitemap.ts` doivent rester **à la racine de
@@ -108,3 +157,6 @@ même droplet, Cloudflare devant en DNS/CDN uniquement.
 | `pnpm --filter <app> seed` | jeu de démonstration |
 | `pnpm --filter <app> types` | régénère `payload-types.ts` |
 | `pnpm --filter <app> importmap` | régénère l'import map de l'admin |
+| `pnpm --filter @websparks/commande test` | tests unitaires des créneaux et du fuseau |
+| `pnpm --filter <app> test:e2e` | parcours de commande, serveur en marche requis |
+| `pnpm --filter <app> test:vue-commandes` | rend la vue admin « commandes du jour » |

@@ -1,3 +1,4 @@
+import { rendusCommande } from '@websparks/commande/blocks'
 import { RenderBlocks } from '@websparks/core/blocks'
 import { obtenirPage } from '@websparks/core'
 import type { Langue } from '@websparks/core'
@@ -18,5 +19,13 @@ export const PageCms = async ({ langue, slug }: { langue: Langue; slug: string }
 
   if (!page) notFound()
 
-  return <RenderBlocks contenu={page.contenu} config={site} contexte={contexte} />
+  return (
+    <RenderBlocks
+      contenu={page.contenu}
+      config={site}
+      contexte={contexte}
+      // Rendus apportés par les modules activés pour ce client.
+      rendus={rendusCommande}
+    />
+  )
 }

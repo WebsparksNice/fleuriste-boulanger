@@ -1,5 +1,5 @@
 import { fr as adminFr } from '@payloadcms/translations/languages/fr'
-import type { CollectionConfig, Config, GlobalConfig } from 'payload'
+import type { Block, CollectionConfig, Config, Field, GlobalConfig } from 'payload'
 
 import type { ConfigSiteResolue } from '../config'
 import { segmentsProduitsReserves } from '../config'
@@ -39,7 +39,18 @@ export type OptionsConfigCore = {
   baseDirImportMap: string
   /** Chemin du fichier de types genere par Payload. */
   cheminTypes?: string
-  optionsProduits?: { allergenes?: boolean }
+  optionsProduits?: {
+    allergenes?: boolean
+    /** Onglet ajoute a la fiche produit par un module optionnel. */
+    ongletSupplementaire?: { label: string; fields: Field[] }
+  }
+  /** Blocs de page apportes par les modules optionnels. */
+  blocsSupplementaires?: Block[]
+  /**
+   * Vues d'administration ajoutees par les modules optionnels.
+   * Chaque entree suit le format attendu par Payload : `{ Component, path }`.
+   */
+  vuesAdmin?: NonNullable<NonNullable<Config['admin']>['components']>['views']
   collectionsSupplementaires?: CollectionConfig[]
   globalesSupplementaires?: GlobalConfig[]
   /** Dernier mot pour l'app cliente : fusionne apres tout le reste. */
@@ -62,6 +73,8 @@ export const creerConfigCore = ({
   baseDirImportMap,
   cheminTypes,
   optionsProduits,
+  blocsSupplementaires = [],
+  vuesAdmin,
   collectionsSupplementaires = [],
   globalesSupplementaires = [],
   surcharges = {},
@@ -95,16 +108,19 @@ export const creerConfigCore = ({
       meta: {
         titleSuffix: ' — Administration',
       },
+      ...(vuesAdmin ? { components: { views: vuesAdmin } } : {}),
     },
 
     collections: [
       Pages({
         slugsReserves: segmentsProduitsReserves(site),
+        blocsSupplementaires,
         previsualisation: construirePrevisualisation(site, 'pages'),
         livePreview,
       }),
       Produits({
         allergenes: optionsProduits?.allergenes,
+        ongletSupplementaire: optionsProduits?.ongletSupplementaire,
         previsualisation: construirePrevisualisation(site, 'produits'),
         livePreview,
       }),

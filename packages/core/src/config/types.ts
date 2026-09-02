@@ -5,6 +5,19 @@ import type { ThemePartiel } from '../theme'
 export type SegmentsRoutes = {
   /** Ex. `{ fr: 'nos-pains', en: 'our-breads' }`. */
   produits?: Partial<Record<Langue, string>>
+  /** Section de commande, si le module est active. Ex. `{ fr: 'commander' }`. */
+  commande?: Partial<Record<Langue, string>>
+}
+
+/**
+ * Modules optionnels actives pour ce client.
+ *
+ * Le socle ne connait que le drapeau : il ne contient aucun code de module et
+ * n'en importe aucun. Le drapeau sert uniquement a savoir s'il faut construire
+ * un lien vers la section correspondante.
+ */
+export type ModulesActifs = {
+  commande?: boolean
 }
 
 export type OptionsSite = {
@@ -38,6 +51,7 @@ export type ConfigSite = {
    */
   fuseau?: string
   routes?: SegmentsRoutes
+  modules?: ModulesActifs
   /**
    * Classes a poser sur `<html>` : c'est la que l'app injecte les variables
    * next/font (next/font exige des appels statiques, impossible depuis le socle).

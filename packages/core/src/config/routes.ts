@@ -14,16 +14,33 @@ const segmentsProduitsParDefaut: Record<Langue, string> = {
   nl: 'producten',
 }
 
+const segmentsCommandeParDefaut: Record<Langue, string> = {
+  fr: 'commander',
+  en: 'order',
+  es: 'pedir',
+  de: 'bestellen',
+  it: 'ordinare',
+  nl: 'bestellen',
+}
+
 /** Segment d'URL de la section produits pour une langue donnee. */
 export const segmentProduits = (config: ConfigSiteResolue, langue: Langue): string =>
   config.routes?.produits?.[langue] ?? segmentsProduitsParDefaut[langue]
 
+/** Segment d'URL de la section commande, quand le module est actif. */
+export const segmentCommande = (config: ConfigSiteResolue, langue: Langue): string =>
+  config.routes?.commande?.[langue] ?? segmentsCommandeParDefaut[langue]
+
 /**
- * Tous les segments produits, toutes langues confondues.
+ * Tous les segments reserves par une route dediee, toutes langues confondues.
  * Sert a interdire ces slugs dans la collection `pages`.
  */
-export const segmentsProduitsReserves = (config: ConfigSiteResolue): string[] =>
-  config.langues.map((langue) => segmentProduits(config, langue))
+export const segmentsProduitsReserves = (config: ConfigSiteResolue): string[] => [
+  ...config.langues.map((langue) => segmentProduits(config, langue)),
+  ...(config.modules?.commande
+    ? config.langues.map((langue) => segmentCommande(config, langue))
+    : []),
+]
 
 /**
  * Construit un chemin interne, prefixe de la langue sauf pour la langue par defaut.
@@ -53,6 +70,10 @@ export const lienProduit = (config: ConfigSiteResolue, langue: Langue, slug: str
 /** Chemin du listing produits. */
 export const lienListeProduits = (config: ConfigSiteResolue, langue: Langue): string =>
   lienVers(config, langue, segmentProduits(config, langue))
+
+/** Chemin de la section commande. */
+export const lienCommande = (config: ConfigSiteResolue, langue: Langue): string =>
+  lienVers(config, langue, segmentCommande(config, langue))
 
 /** URL absolue, pour les balises canoniques, le sitemap et le JSON-LD. */
 export const urlAbsolue = (config: ConfigSiteResolue, chemin: string): string =>
