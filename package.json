@@ -1,0 +1,19 @@
+{
+  "name": "websparks-sites",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.9.0",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "pnpm --filter demo-boulangerie dev",
+    "build": "pnpm --filter demo-boulangerie build",
+    "start": "pnpm --filter demo-boulangerie start",
+    "types": "pnpm --filter demo-boulangerie types",
+    "typecheck": "pnpm -r exec tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

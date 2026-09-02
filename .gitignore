@@ -1,0 +1,20 @@
+# Dépendances
+node_modules/
+
+# Build
+.next/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Environnement
+.env
+.env.local
+.env.*.local
+
+# Médias téléversés : ils vivent sur le volume persistant du serveur,
+# pas dans le dépôt.
+apps/*/public/media/
+
+# Système
+.DS_Store

@@ -1,0 +1,9 @@
+@import 'tailwindcss';
+@import '@websparks/core/styles.css';
+
+/*
+ * Tailwind v4 detecte les classes dans les fichiers du projet. Le socle vivant
+ * dans un autre paquet du monorepo, il faut le lui indiquer explicitement,
+ * sans quoi les classes utilisees par les blocs seraient absentes du CSS final.
+ */
+@source '../../../../packages/core/src';
