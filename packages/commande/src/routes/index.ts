@@ -5,6 +5,7 @@ export {
   creerRouteConfirmationStripe,
   creerRouteConnexionStripe,
   creerRouteDeconnexionStripe,
+  creerRouteEtatStripe,
   creerRouteLiaisonStripe,
   creerRouteRetourStripe,
 } from './stripeConnect'

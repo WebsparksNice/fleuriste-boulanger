@@ -200,7 +200,20 @@ encaissements du commerçant sur le compte de l'agence.
   point de terminaison Connect reçoit ceux de tous les comptes de la plateforme.
 - L'état du compte est rafraîchi par `account.updated` plutôt que figé à la
   liaison : un commerçant qui termine son inscription chez Stripe devient
-  encaissant sans avoir à délier puis relier.
+  encaissant sans avoir à délier puis relier. Un bouton **Vérifier l'état**
+  refait la lecture à la demande, pour les cas où l'événement n'arrive pas.
+
+### « Ce compte n'est pas autorisé à encaisser »
+
+Un compte connecté ne peut encaisser qu'une fois son inscription Stripe
+complétée. En mode test, le plus simple est de choisir **Créer un compte**
+pendant la liaison plutôt qu'un compte existant : le formulaire d'inscription
+s'ouvre alors, et le lien *Ignorer ce formulaire* le remplit avec des données
+fictives, ce qui active l'encaissement immédiatement.
+
+Attention : sur l'écran de sélection, *Ignorer ce formulaire* ne concerne que
+la création d'un compte. Si vous sélectionnez un compte existant qui n'a jamais
+terminé son inscription, il restera inapte à encaisser.
 
 ## Commandes : ce sur quoi reposent les garanties
 

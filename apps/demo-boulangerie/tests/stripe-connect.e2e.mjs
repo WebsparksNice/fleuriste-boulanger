@@ -150,6 +150,19 @@ const usurpation = await fetch(`${BASE}/api/commande/stripe/liaison`, {
 })
 verifier('jeton lancé par un autre compte : refusé', usurpation.status === 403, String(usurpation.status))
 
+console.log('\n— Vérification de l’état à la demande —')
+const etatAnonyme = await fetch(`${BASE}/api/commande/stripe/etat`, { method: 'POST' })
+verifier('anonyme refusé', etatAnonyme.status === 401, String(etatAnonyme.status))
+
+const etatLie = await fetch(`${BASE}/api/commande/stripe/etat`, { method: 'POST', headers: admin })
+verifier('compte lié : état relu', etatLie.status === 200, String(etatLie.status))
+if (etatLie.status === 200) {
+  const corps = await etatLie.json()
+  // La clé Stripe est factice : la lecture échoue et le compte est déclaré
+  // inapte, ce qui est le comportement voulu — jamais une erreur 500.
+  verifier('réponse exploitable', typeof corps.chargesActives === 'boolean', JSON.stringify(corps))
+}
+
 console.log('\n— Déconnexion —')
 const dcAnonyme = await fetch(`${BASE}/api/commande/stripe/deconnexion`, { method: 'POST' })
 verifier('anonyme refusé', dcAnonyme.status === 401, String(dcAnonyme.status))
@@ -159,6 +172,9 @@ const deconnexion = await fetch(`${BASE}/api/commande/stripe/deconnexion`, {
   headers: admin,
 })
 verifier('compte délié', deconnexion.status === 200, String(deconnexion.status))
+
+const etatSansCompte = await fetch(`${BASE}/api/commande/stripe/etat`, { method: 'POST', headers: admin })
+verifier('sans compte lié : 409 explicite', etatSansCompte.status === 409, String(etatSansCompte.status))
 
 console.log('\n— Sans compte lié, aucun paiement en ligne —')
 const formulaire = await (await fetch(`${BASE}/commander`)).text()

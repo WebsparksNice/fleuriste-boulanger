@@ -227,6 +227,48 @@ export const creerRouteLiaisonStripe = (module: ModuleCommande) => {
   }
 }
 
+/**
+ * Relit l'état du compte auprès de Stripe.
+ *
+ * Le webhook `account.updated` fait normalement ce travail tout seul. Ce bouton
+ * existe pour les cas où il n'arrive pas : point de terminaison pas encore
+ * déclaré, tunnel local fermé, événement manqué. Sans lui, un commerçant qui
+ * vient de terminer son inscription n'a aucun moyen de le faire savoir au site.
+ */
+export const creerRouteEtatStripe = (module: ModuleCommande) => {
+  return async (requete: Request): Promise<Response> => {
+    const payload = await getPayload({ config: module.payloadConfig })
+    const { user } = await payload.auth({ headers: requete.headers })
+    if (!user) return new Response('Authentification requise.', { status: 401 })
+
+    const globale = (await payload.findGlobal({
+      slug: 'config-commande',
+      depth: 0,
+      overrideAccess: true,
+    })) as { stripeCompteId?: string | null }
+
+    if (!globale.stripeCompteId) {
+      return new Response('Aucun compte lié.', { status: 409 })
+    }
+
+    const stripe = clientStripe()
+    if (!stripe) return new Response('Clé de plateforme Stripe absente.', { status: 501 })
+
+    const compte = await detailsCompte(stripe, globale.stripeCompteId)
+
+    await payload.updateGlobal({
+      slug: 'config-commande',
+      overrideAccess: true,
+      data: {
+        stripeCompteNom: compte.nom,
+        stripeChargesActives: compte.chargesActives,
+      },
+    })
+
+    return Response.json({ nom: compte.nom, chargesActives: compte.chargesActives })
+  }
+}
+
 /** Délie le compte : révocation côté Stripe, puis nettoyage côté site. */
 export const creerRouteDeconnexionStripe = (module: ModuleCommande) => {
   return async (requete: Request): Promise<Response> => {

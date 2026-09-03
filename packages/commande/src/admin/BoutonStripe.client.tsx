@@ -3,7 +3,11 @@
 import { useFormFields } from '@payloadcms/ui'
 import { useState } from 'react'
 
-import { CHEMIN_CONNEXION_STRIPE, CHEMIN_DECONNEXION_STRIPE } from '../chemins'
+import {
+  CHEMIN_CONNEXION_STRIPE,
+  CHEMIN_DECONNEXION_STRIPE,
+  CHEMIN_ETAT_STRIPE,
+} from '../chemins'
 
 const styles = {
   cadre: {
@@ -50,6 +54,29 @@ export const BoutonStripe = () => {
 
   const [enCours, setEnCours] = useState(false)
   const [erreur, setErreur] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+
+  const verifier = async () => {
+    setEnCours(true)
+    setErreur(null)
+    setMessage(null)
+    try {
+      const reponse = await fetch(CHEMIN_ETAT_STRIPE, { method: 'POST' })
+      if (!reponse.ok) throw new Error(await reponse.text())
+
+      const etat = (await reponse.json()) as { chargesActives: boolean }
+      if (etat.chargesActives) {
+        window.location.reload()
+        return
+      }
+
+      setMessage('Toujours pas autorisé à encaisser. Terminez la configuration sur Stripe.')
+      setEnCours(false)
+    } catch (probleme) {
+      setErreur(String(probleme))
+      setEnCours(false)
+    }
+  }
 
   const deconnecter = async () => {
     setEnCours(true)
@@ -84,17 +111,35 @@ export const BoutonStripe = () => {
       <h4 style={{ margin: '0 0 0.25rem' }}>Paiement en ligne</h4>
       <p style={styles.discret}>
         Compte lié : <strong>{compteNom || compteId}</strong>
-        {chargesActives ? null : (
-          <span style={styles.alerte}>
-            {' '}
-            — ce compte n’est pas encore autorisé à encaisser. Terminez sa configuration sur
-            Stripe.
-          </span>
-        )}
       </p>
-      <button type="button" onClick={deconnecter} disabled={enCours} style={styles.bouton}>
-        {enCours ? 'Déconnexion…' : 'Délier ce compte'}
-      </button>
+
+      {chargesActives ? null : (
+        <p style={styles.alerte}>
+          Ce compte n’est pas encore autorisé à encaisser.{' '}
+          <a
+            href="https://dashboard.stripe.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'inherit' }}
+          >
+            Terminez sa configuration sur Stripe
+          </a>
+          , puis vérifiez son état ci-dessous.
+        </p>
+      )}
+
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        {chargesActives ? null : (
+          <button type="button" onClick={verifier} disabled={enCours} style={styles.bouton}>
+            {enCours ? 'Vérification…' : 'Vérifier l’état'}
+          </button>
+        )}
+        <button type="button" onClick={deconnecter} disabled={enCours} style={styles.bouton}>
+          {enCours ? 'Patientez…' : 'Délier ce compte'}
+        </button>
+      </div>
+
+      {message ? <p style={styles.alerte}>{message}</p> : null}
       {erreur ? <p style={styles.alerte}>{erreur}</p> : null}
     </div>
   )
