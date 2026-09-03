@@ -145,6 +145,7 @@ export const creerRoutePostCommande = (module: ModuleCommande) => {
         urlAnnulation: `${site.urlSite}${cheminFormulaire}?erreur=paiement_annule`,
         langue,
         minutesAvantExpiration: reglages.minutesAvantExpiration,
+        compteConnecte: reglages.compteStripe,
       })
 
       await payload.update({

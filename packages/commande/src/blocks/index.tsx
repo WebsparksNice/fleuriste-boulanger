@@ -23,6 +23,7 @@ export const rendusCommande: RegistreBlocs = {
   commande: BlocCommande,
 }
 
-export { FormulaireCommande, CHEMIN_ENVOI_COMMANDE } from './FormulaireCommande'
+export { FormulaireCommande } from './FormulaireCommande'
+export { CHEMIN_ENVOI_COMMANDE } from '../chemins'
 export { PageConfirmationCommande } from './PageConfirmation'
 export { decoderPanier, encoderPanier } from './panierUrl'

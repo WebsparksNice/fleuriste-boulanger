@@ -8,6 +8,8 @@
 
 export { definirCommande } from './config'
 export type { ModuleCommande, OptionsModuleCommande } from './config'
+export * from './chemins'
+export { modeConnect } from './serveur/connect'
 export { dictionnaireCommande } from './i18n'
 export type { DictionnaireCommande } from './i18n'
 export {

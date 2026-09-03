@@ -55,6 +55,7 @@ Pour l'activer :
    d'extension du socle
 4. copier `src/commande.config.ts` et les routes `app/(payload)/api/commande/*`
 5. renseigner `STRIPE_*` et `RESEND_API_KEY` dans `.env`
+6. générer et appliquer la migration : `migrate:create` puis `migrate`
 
 Voir `apps/demo-boulangerie` pour le branchement complet.
 
@@ -111,6 +112,55 @@ la galerie, chargée en différé et uniquement si l'éditeur coche
 aussi, le filtre produits passe par des liens. Reste le socle Next lui-même
 (~190 Ko gzip), qui n'est pas retirable en App Router.
 
+## Paiement : Stripe Connect
+
+Le commerçant relie son propre compte Stripe depuis l'administration, par un
+bouton. **Aucune clé secrète de commerçant ne circule** : ni dans le CMS, ni
+dans un fichier, ni dans une sauvegarde de base.
+
+Les paiements sont des **charges directes** : ils sont créés au nom du compte
+du commerçant, l'argent y arrive sans transiter par l'agence. Celle-ci n'est ni
+encaisseur ni responsable des litiges et des remboursements.
+
+### Mise en place, une fois pour toute l'agence
+
+1. Créer une plateforme Connect dans le tableau de bord Stripe de l'agence.
+2. Y déclarer l'adresse de retour de chaque site :
+   `https://<domaine-du-client>/api/commande/stripe/retour`
+3. Renseigner dans le `.env` de chaque site :
+   - `STRIPE_SECRET_KEY` — clé de la **plateforme**, identique partout
+   - `STRIPE_CONNECT_CLIENT_ID` — le `ca_...` de la plateforme
+   - `STRIPE_WEBHOOK_SECRET` — secret du point de terminaison Connect
+
+Le commerçant fait le reste seul : *Réglages des commandes → Connecter mon
+compte Stripe*.
+
+### Deux modes qui s'excluent
+
+`STRIPE_CONNECT_CLIENT_ID` décide à lui seul :
+
+| Renseigné | Mode | `STRIPE_SECRET_KEY` est… |
+|---|---|---|
+| oui | Connect | la clé de la plateforme de l'agence |
+| non | clé directe | la clé du commerçant lui-même |
+
+**Il n'y a pas de repli de l'un sur l'autre, et c'est délibéré.** En mode
+Connect, si aucun compte n'est lié, le paiement en ligne reste indisponible
+plutôt que de retomber sur la clé de plateforme — ce repli enverrait les
+encaissements du commerçant sur le compte de l'agence.
+
+### Ce qui protège la liaison
+
+- Le paramètre `state` est un jeton signé (HMAC), lié à l'utilisateur qui a
+  lancé la démarche et valable dix minutes.
+- Le retour de Stripe **n'enregistre rien** : il arrive d'un autre domaine, où
+  Payload refuse la session en cookie (`Sec-Fetch-Site: cross-site`). Il
+  présente une page de confirmation dont le bouton repart en POST depuis notre
+  domaine, seule requête où la session est vérifiable — et où lier le compte
+  qui encaissera devient un geste explicite.
+- Le webhook n'accepte que les événements dont le compte est celui du site : un
+  point de terminaison Connect reçoit ceux de tous les comptes de la plateforme.
+
 ## Commandes : ce sur quoi reposent les garanties
 
 - **Les créneaux sont calculés côté serveur**, par la même fonction à
@@ -144,8 +194,10 @@ même droplet, Cloudflare devant en DNS/CDN uniquement.
   par la revalidation à la publication. Mettre en cache `/_next/static/*` et
   `/media/*` seulement.
 - Laisser **Rocket Loader désactivé** : il casse l'hydratation Next.
-- Migrations : `pnpm --filter <app> migrate:create` puis `migrate` au
-  déploiement. Le mode `push` automatique ne vaut qu'en développement.
+- Migrations : `pnpm --filter <app> migrate:create <nom>` en développement,
+  `pnpm --filter <app> migrate` au déploiement. Le mode `push` automatique ne
+  vaut qu'en développement — en production, une colonne manquante se traduit
+  par une erreur 500 sur la page concernée.
 
 ## Scripts
 
@@ -159,4 +211,5 @@ même droplet, Cloudflare devant en DNS/CDN uniquement.
 | `pnpm --filter <app> importmap` | régénère l'import map de l'admin |
 | `pnpm --filter @websparks/commande test` | tests unitaires des créneaux et du fuseau |
 | `pnpm --filter <app> test:e2e` | parcours de commande, serveur en marche requis |
+| `pnpm --filter <app> test:stripe` | liaison Stripe Connect, serveur en marche requis |
 | `pnpm --filter <app> test:vue-commandes` | rend la vue admin « commandes du jour » |

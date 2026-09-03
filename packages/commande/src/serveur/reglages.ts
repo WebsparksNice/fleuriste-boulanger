@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
 
+import { modeConnect } from './connect'
 import { dateLocaleIso } from '../domaine/fuseau'
 import type { JourRetrait } from '../domaine/creneaux'
 import type { ReglagesCommande } from './types'
@@ -14,6 +15,8 @@ type GlobaleConfigCommande = {
   joursFermes?: { date?: string | null; motif?: string | null }[] | null
   paiementEnLigne?: boolean | null
   paiementSurPlace?: boolean | null
+  stripeCompteId?: string | null
+  stripeChargesActives?: boolean | null
   messageConfirmation?: string | null
   emailCommercant?: string | null
 }
@@ -41,6 +44,21 @@ export const lireReglages = async (
     return Number.isNaN(date.getTime()) ? [] : [dateLocaleIso(date, fuseau)]
   })
 
+  const compteStripe = globale.stripeCompteId ?? null
+
+  /*
+   * Le paiement en ligne demande deux choses : que le commerçant l'ait voulu,
+   * et qu'il soit techniquement possible. En mode Connect, cela suppose un
+   * compte lié et autorisé à encaisser ; sinon, une clé dans l'environnement.
+   *
+   * Retomber sur la clé de plateforme quand aucun compte n'est lié enverrait
+   * les encaissements sur le compte de l'agence : ce cas est explicitement
+   * exclu, quitte à refuser le paiement en ligne.
+   */
+  const encaissementPossible = modeConnect()
+    ? Boolean(compteStripe && globale.stripeChargesActives)
+    : Boolean(process.env.STRIPE_SECRET_KEY)
+
   return {
     regles: {
       dureeMinutes: globale.dureeCreneauMinutes ?? 15,
@@ -52,7 +70,8 @@ export const lireReglages = async (
       fuseau,
     },
     minutesAvantExpiration: globale.minutesAvantExpiration ?? 30,
-    paiementEnLigne: Boolean(globale.paiementEnLigne),
+    compteStripe,
+    paiementEnLigne: Boolean(globale.paiementEnLigne) && encaissementPossible,
     paiementSurPlace: globale.paiementSurPlace !== false,
     messageConfirmation: globale.messageConfirmation ?? null,
     emailCommercant: globale.emailCommercant ?? null,

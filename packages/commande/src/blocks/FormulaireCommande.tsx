@@ -2,6 +2,7 @@ import { Conteneur, Section, Titre } from '@websparks/core/ui'
 import type { ConfigSiteResolue } from '@websparks/core'
 import type { ContexteRendu } from '@websparks/core'
 
+import { CHEMIN_ENVOI_COMMANDE } from '../chemins'
 import { genererCreneaux, grouperParJour } from '../domaine/creneaux'
 import { formaterEuros, formaterJourLong, formaterPlage } from '../domaine/formats'
 import { dictionnaireCommande } from '../i18n'
@@ -9,8 +10,6 @@ import { compterParCreneau } from '../serveur/reservation'
 import { listerProduitsCommandables } from '../serveur/panier'
 import { lireReglages } from '../serveur/reglages'
 import { decoderPanier } from './panierUrl'
-
-export const CHEMIN_ENVOI_COMMANDE = '/api/commande'
 
 type ProprietesFormulaire = {
   config: ConfigSiteResolue

@@ -39,6 +39,13 @@ export type PanierCalcule = {
 export type ReglagesCommande = {
   regles: ReglesCreneaux
   minutesAvantExpiration: number
+  /**
+   * Compte Stripe du commerçant, lié via Connect. `null` en mode clé directe.
+   * Les paiements sont créés au nom de ce compte : l'argent y arrive
+   * directement, sans transiter par la plateforme.
+   */
+  compteStripe: string | null
+  /** Vrai seulement si l'encaissement est réellement possible aujourd'hui. */
   paiementEnLigne: boolean
   paiementSurPlace: boolean
   messageConfirmation?: string | null

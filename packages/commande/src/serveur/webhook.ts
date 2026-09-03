@@ -2,6 +2,7 @@ import type { Payload } from 'payload'
 import type Stripe from 'stripe'
 
 import type { GabaritsEmail } from '../emails/types'
+import { modeConnect } from './connect'
 import { envoyerEmailsCommande } from './envoi'
 import { lireReglages } from './reglages'
 import { clientStripe } from './stripe'
@@ -46,6 +47,10 @@ type CommandeStockee = {
  *    traitement enverrait deux e-mails de confirmation ;
  * 3. l'état de la commande est revérifié — une commande déjà payée n'est pas
  *    repayée, même si le journal d'événements a été purgé.
+ *
+ * S'y ajoute, en mode Connect, un filtre sur le compte : un même point de
+ * terminaison reçoit les événements de tous les comptes liés à la plateforme.
+ * Un site ne doit traiter que les siens.
  */
 export const traiterWebhookStripe = async ({
   payload,
@@ -72,6 +77,14 @@ export const traiterWebhookStripe = async ({
   } catch (erreur) {
     payload.logger.warn(`[stripe] signature invalide : ${String(erreur)}`)
     return { statut: 400, message: 'Signature invalide' }
+  }
+
+  const reglages = await lireReglages(payload, fuseau)
+
+  if (modeConnect()) {
+    if (!reglages.compteStripe || evenement.account !== reglages.compteStripe) {
+      return { statut: 200, message: 'Événement d’un autre compte, ignoré' }
+    }
   }
 
   // Verrou d'idempotence : la seconde livraison du même événement échoue ici.
@@ -144,8 +157,6 @@ export const traiterWebhookStripe = async ({
       overrideAccess: true,
     })
   }
-
-  const reglages = await lireReglages(payload, fuseau)
 
   await envoyerEmailsCommande({
     payload,

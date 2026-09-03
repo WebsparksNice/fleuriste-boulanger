@@ -1856,8 +1856,12 @@ export interface ConfigCommande {
         id?: string | null;
       }[]
     | null;
+  stripeCompteId?: string | null;
+  stripeCompteNom?: string | null;
+  stripeChargesActives?: boolean | null;
+  stripeConnecteLe?: string | null;
   /**
-   * Nécessite les clés Stripe dans les variables d’environnement du site.
+   * Reste sans effet tant qu’aucun compte Stripe n’est lié et capable d’encaisser.
    */
   paiementEnLigne?: boolean | null;
   paiementSurPlace?: boolean | null;
@@ -2040,6 +2044,10 @@ export interface ConfigCommandeSelect<T extends boolean = true> {
         motif?: T;
         id?: T;
       };
+  stripeCompteId?: T;
+  stripeCompteNom?: T;
+  stripeChargesActives?: T;
+  stripeConnecteLe?: T;
   paiementEnLigne?: T;
   paiementSurPlace?: T;
   messageConfirmation?: T;
