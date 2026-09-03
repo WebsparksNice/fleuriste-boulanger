@@ -1,7 +1,8 @@
 import '@/styles/globals.css'
 
-import { SiteLayout } from '@websparks/core'
+import { SiteLayout, lienCommande } from '@websparks/core'
 import { StyleTheme } from '@websparks/core/theme'
+import Link from 'next/link'
 import type { ReactNode } from 'react'
 
 import { classesPolices } from '@/polices'
@@ -42,6 +43,16 @@ const LayoutSite = async ({
           langue={langue}
           etablissement={etablissement}
           navigation={navigation}
+          actionsEnTete={
+            site.modules?.commande ? (
+              <Link
+                href={lienCommande(site, langue)}
+                className="inline-flex min-h-11 items-center rounded-md border border-primaire px-4 font-medium text-primaire"
+              >
+                Commander
+              </Link>
+            ) : null
+          }
         >
           {children}
         </SiteLayout>

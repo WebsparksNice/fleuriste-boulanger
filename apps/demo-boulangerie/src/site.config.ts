@@ -17,6 +17,14 @@ export const site = definirSite({
 
   routes: {
     produits: { fr: 'nos-pains', en: 'our-breads' },
+    commande: { fr: 'commander', en: 'order' },
+  },
+
+  // Modules optionnels. Retirer cette ligne suffit à faire disparaître la
+  // section commande du site ; retirer la dépendance du package.json la fait
+  // disparaître du bundle.
+  modules: {
+    commande: true,
   },
 
   theme: {

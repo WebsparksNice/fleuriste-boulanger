@@ -17,6 +17,8 @@ type ProprietesSiteLayout = {
   navigation?: NavigationDoc | null
   /** Chemins equivalents dans les autres langues, pour le selecteur de langue. */
   alternatives?: Partial<Record<Langue, string>>
+  /** Actions injectees dans l'en-tete par un module optionnel. */
+  actionsEnTete?: ReactNode
 }
 
 /**
@@ -33,6 +35,7 @@ export const SiteLayout = ({
   etablissement,
   navigation,
   alternatives,
+  actionsEnTete,
 }: ProprietesSiteLayout) => {
   const t = obtenirDictionnaire(langue, config.dictionnaires)
 
@@ -49,6 +52,7 @@ export const SiteLayout = ({
           langue={langue}
           alternatives={alternatives}
           t={t}
+          actions={actionsEnTete}
         />
 
         <main id="contenu" className="flex-1">

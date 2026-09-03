@@ -74,6 +74,9 @@ export interface Config {
     faq: Faq;
     media: Media;
     utilisateurs: Utilisateur;
+    commandes: Commande;
+    'reservations-creneaux': ReservationsCreneau;
+    'evenements-stripe': EvenementsStripe;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
@@ -89,6 +92,9 @@ export interface Config {
     faq: FaqSelect<false> | FaqSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     utilisateurs: UtilisateursSelect<false> | UtilisateursSelect<true>;
+    commandes: CommandesSelect<false> | CommandesSelect<true>;
+    'reservations-creneaux': ReservationsCreneauxSelect<false> | ReservationsCreneauxSelect<true>;
+    'evenements-stripe': EvenementsStripeSelect<false> | EvenementsStripeSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -103,11 +109,13 @@ export interface Config {
     etablissement: Etablissement;
     navigation: Navigation;
     'reglages-seo': ReglagesSeo;
+    'config-commande': ConfigCommande;
   };
   globalsSelect: {
     etablissement: EtablissementSelect<false> | EtablissementSelect<true>;
     navigation: NavigationSelect<false> | NavigationSelect<true>;
     'reglages-seo': ReglagesSeoSelect<false> | ReglagesSeoSelect<true>;
+    'config-commande': ConfigCommandeSelect<false> | ConfigCommandeSelect<true>;
   };
   locale: 'fr';
   widgets: {
@@ -170,6 +178,7 @@ export interface Page {
         | BlocFaq
         | BlocContact
         | BlocCta
+        | BlocCommande
       )[]
     | null;
   seo?: MetaSeo;
@@ -476,6 +485,17 @@ export interface Produit {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Prix réellement facturé.
+   */
+  prix?: number | null;
+  disponible?: boolean | null;
+  /**
+   * S’ajoute au délai minimum général pour ce produit.
+   */
+  delaiPreparationHeures?: number | null;
+  quantiteMaxParCommande?: number | null;
+  noteCommande?: string | null;
   seo?: MetaSeo;
   updatedAt: string;
   createdAt: string;
@@ -718,6 +738,32 @@ export interface BlocCta {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlocCommande".
+ */
+export interface BlocCommande {
+  titre?: string | null;
+  intro?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  apparence?: ApparenceBloc;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'commande';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "utilisateurs".
  */
 export interface Utilisateur {
@@ -745,6 +791,89 @@ export interface Utilisateur {
     | null;
   password?: string | null;
   collection: 'utilisateurs';
+}
+/**
+ * Commandes passées depuis le site. Le détail des lignes n’est pas modifiable.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "commandes".
+ */
+export interface Commande {
+  id: number;
+  numero?: string | null;
+  creneauDebut: string;
+  creneauFin: string;
+  statutCommande: 'nouvelle' | 'confirmee' | 'prete' | 'recuperee' | 'annulee';
+  statutPaiement: 'en_attente' | 'payee' | 'sur_place' | 'remboursee';
+  client: ClientCommande;
+  /**
+   * Copie figée du produit et de son prix au moment de la commande.
+   */
+  lignes: {
+    nomProduit: string;
+    quantite: number;
+    prixUnitaireCentimes: number;
+    totalLigneCentimes: number;
+    /**
+     * Lien de confort vers la fiche. Le montant facturé reste celui ci-dessus.
+     */
+    produit?: (number | null) | Produit;
+    id?: string | null;
+  }[];
+  /**
+   * En centimes, recalculé côté serveur depuis la base. Jamais lu depuis la requête du navigateur.
+   */
+  totalCentimes: number;
+  /**
+   * Message du client, complété si besoin par le commerçant.
+   */
+  notes?: string | null;
+  jeton?: string | null;
+  stripeSessionId?: string | null;
+  /**
+   * Passé ce délai, une commande non payée libère sa place dans le créneau.
+   */
+  expireLe?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ClientCommande".
+ */
+export interface ClientCommande {
+  nom: string;
+  telephone: string;
+  email: string;
+}
+/**
+ * Table technique : une ligne par place occupée. Elle se remplit et se vide toute seule.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservations-creneaux".
+ */
+export interface ReservationsCreneau {
+  id: number;
+  creneau: string;
+  position: number;
+  commande: number | Commande;
+  /**
+   * Renseigné tant que la commande n’est pas payée. Une fois dépassé, la place est rendue.
+   */
+  expireLe?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "evenements-stripe".
+ */
+export interface EvenementsStripe {
+  id: number;
+  evenementId: string;
+  type?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -889,6 +1018,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'utilisateurs';
         value: number | Utilisateur;
+      } | null)
+    | ({
+        relationTo: 'commandes';
+        value: number | Commande;
+      } | null)
+    | ({
+        relationTo: 'reservations-creneaux';
+        value: number | ReservationsCreneau;
+      } | null)
+    | ({
+        relationTo: 'evenements-stripe';
+        value: number | EvenementsStripe;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -951,6 +1092,7 @@ export interface PagesSelect<T extends boolean = true> {
         faq?: T | BlocFaqSelect<T>;
         contact?: T | BlocContactSelect<T>;
         cta?: T | BlocCtaSelect<T>;
+        commande?: T | BlocCommandeSelect<T>;
       };
   seo?: T | MetaSeoSelect<T>;
   updatedAt?: T;
@@ -1158,6 +1300,17 @@ export interface BlocCtaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlocCommande_select".
+ */
+export interface BlocCommandeSelect<T extends boolean = true> {
+  titre?: T;
+  intro?: T;
+  apparence?: T | ApparenceBlocSelect<T>;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "MetaSeo_select".
  */
 export interface MetaSeoSelect<T extends boolean = true> {
@@ -1187,6 +1340,11 @@ export interface ProduitsSelect<T extends boolean = true> {
         image?: T;
         id?: T;
       };
+  prix?: T;
+  disponible?: T;
+  delaiPreparationHeures?: T;
+  quantiteMaxParCommande?: T;
+  noteCommande?: T;
   seo?: T | MetaSeoSelect<T>;
   updatedAt?: T;
   createdAt?: T;
@@ -1314,6 +1472,66 @@ export interface UtilisateursSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "commandes_select".
+ */
+export interface CommandesSelect<T extends boolean = true> {
+  numero?: T;
+  creneauDebut?: T;
+  creneauFin?: T;
+  statutCommande?: T;
+  statutPaiement?: T;
+  client?: T | ClientCommandeSelect<T>;
+  lignes?:
+    | T
+    | {
+        nomProduit?: T;
+        quantite?: T;
+        prixUnitaireCentimes?: T;
+        totalLigneCentimes?: T;
+        produit?: T;
+        id?: T;
+      };
+  totalCentimes?: T;
+  notes?: T;
+  jeton?: T;
+  stripeSessionId?: T;
+  expireLe?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ClientCommande_select".
+ */
+export interface ClientCommandeSelect<T extends boolean = true> {
+  nom?: T;
+  telephone?: T;
+  email?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reservations-creneaux_select".
+ */
+export interface ReservationsCreneauxSelect<T extends boolean = true> {
+  creneau?: T;
+  position?: T;
+  commande?: T;
+  expireLe?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "evenements-stripe_select".
+ */
+export interface EvenementsStripeSelect<T extends boolean = true> {
+  evenementId?: T;
+  type?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1593,6 +1811,69 @@ export interface ReglagesSeo {
   createdAt?: string | null;
 }
 /**
+ * Créneaux de retrait, capacité et moyens de paiement acceptés.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config-commande".
+ */
+export interface ConfigCommande {
+  id: number;
+  dureeCreneauMinutes: number;
+  /**
+   * Ce que vous pouvez préparer et remettre sans faire attendre.
+   */
+  capaciteParCreneau: number;
+  delaiMinimumHeures: number;
+  horizonJours: number;
+  /**
+   * Au-delà, la place est rendue au créneau si le paiement en ligne n’a pas abouti.
+   */
+  minutesAvantExpiration: number;
+  /**
+   * Un jour absent de cette liste n’accepte aucun retrait. Ces horaires sont indépendants de ceux de la boutique.
+   */
+  horairesRetrait?:
+    | {
+        jour: 'lundi' | 'mardi' | 'mercredi' | 'jeudi' | 'vendredi' | 'samedi' | 'dimanche';
+        ferme?: boolean | null;
+        plages?:
+          | {
+              debut?: string | null;
+              fin?: string | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Fermetures exceptionnelles : jours fériés, congés, inventaire.
+   */
+  joursFermes?:
+    | {
+        date: string;
+        motif?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  stripeCompteId?: string | null;
+  stripeCompteNom?: string | null;
+  stripeChargesActives?: boolean | null;
+  stripeConnecteLe?: string | null;
+  /**
+   * Reste sans effet tant qu’aucun compte Stripe n’est lié et capable d’encaisser.
+   */
+  paiementEnLigne?: boolean | null;
+  paiementSurPlace?: boolean | null;
+  messageConfirmation?: string | null;
+  /**
+   * Vide, l’adresse de la fiche Établissement est utilisée.
+   */
+  emailCommercant?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "etablissement_select".
  */
@@ -1728,6 +2009,49 @@ export interface ReglagesSeoSelect<T extends boolean = true> {
   imagePartage?: T;
   autoriserIndexation?: T;
   verificationGoogle?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "config-commande_select".
+ */
+export interface ConfigCommandeSelect<T extends boolean = true> {
+  dureeCreneauMinutes?: T;
+  capaciteParCreneau?: T;
+  delaiMinimumHeures?: T;
+  horizonJours?: T;
+  minutesAvantExpiration?: T;
+  horairesRetrait?:
+    | T
+    | {
+        jour?: T;
+        ferme?: T;
+        plages?:
+          | T
+          | {
+              debut?: T;
+              fin?: T;
+              id?: T;
+            };
+        id?: T;
+      };
+  joursFermes?:
+    | T
+    | {
+        date?: T;
+        motif?: T;
+        id?: T;
+      };
+  stripeCompteId?: T;
+  stripeCompteNom?: T;
+  stripeChargesActives?: T;
+  stripeConnecteLe?: T;
+  paiementEnLigne?: T;
+  paiementSurPlace?: T;
+  messageConfirmation?: T;
+  emailCommercant?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

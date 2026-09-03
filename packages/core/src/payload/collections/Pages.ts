@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { Block, CollectionConfig } from 'payload'
 
 import { authentifie, publieOuAuthentifie } from '../access'
 import { blocsDeContenu } from '../blocks'
@@ -9,6 +9,11 @@ import { revaliderApresChangement, revaliderApresSuppression } from '../hooks/re
 type OptionsPages = {
   /** Slugs deja pris par une route dediee (listing produits, etc.). */
   slugsReserves?: string[]
+  /**
+   * Blocs apportes par les modules optionnels.
+   * Ils s'ajoutent a ceux du socle dans le menu d'ajout de l'admin.
+   */
+  blocsSupplementaires?: Block[]
   /** URL du bouton « Previsualiser », fournie par `creerConfigCore`. */
   previsualisation?: NonNullable<CollectionConfig['admin']>['preview']
   livePreview?: NonNullable<CollectionConfig['admin']>['livePreview']
@@ -16,6 +21,7 @@ type OptionsPages = {
 
 export const Pages = ({
   slugsReserves = [],
+  blocsSupplementaires = [],
   previsualisation,
   livePreview,
 }: OptionsPages = {}): CollectionConfig => ({
@@ -66,7 +72,7 @@ export const Pages = ({
               type: 'blocks',
               label: 'Blocs',
               labels: { singular: 'Bloc', plural: 'Blocs' },
-              blocks: blocsDeContenu,
+              blocks: [...blocsDeContenu, ...blocsSupplementaires],
               admin: {
                 description: 'Empilez les blocs pour composer la page. Ils se reordonnent par glisser-deposer.',
               },

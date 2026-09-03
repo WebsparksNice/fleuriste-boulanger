@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 import type { ConfigSiteResolue } from '../../config'
 import { lienVers } from '../../config'
@@ -16,6 +17,11 @@ type ProprietesEnTete = {
   langue: Langue
   alternatives?: Partial<Record<Langue, string>>
   t: Dictionnaire
+  /**
+   * Emplacement laisse aux modules optionnels (bouton « Commander », panier...).
+   * Le socle ne sait pas ce qu'on y met et n'importe rien pour l'afficher.
+   */
+  actions?: ReactNode
 }
 
 /**
@@ -34,6 +40,7 @@ export const EnTete = ({
   langue,
   alternatives,
   t,
+  actions,
 }: ProprietesEnTete) => {
   const entrees = resoudreLiens(navigation?.menuPrincipal, config, langue, etablissement)
   const cta = navigation?.ctaEnTete?.actif
@@ -86,6 +93,7 @@ export const EnTete = ({
             t={t}
             className="hidden sm:block"
           />
+          {actions}
           {cta ? <Bouton lien={cta} className="hidden lg:inline-flex" /> : null}
 
           {/* Menu mobile : disclosure native, sans JavaScript */}

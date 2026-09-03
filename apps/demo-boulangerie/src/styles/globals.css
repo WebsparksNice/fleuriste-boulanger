@@ -2,8 +2,14 @@
 @import '@websparks/core/styles.css';
 
 /*
- * Tailwind v4 detecte les classes dans les fichiers du projet. Le socle vivant
- * dans un autre paquet du monorepo, il faut le lui indiquer explicitement,
- * sans quoi les classes utilisees par les blocs seraient absentes du CSS final.
+ * Tailwind v4 detecte les classes dans les fichiers du projet. Le socle et les
+ * modules vivant dans d'autres paquets du monorepo, il faut les lui indiquer
+ * explicitement, sans quoi leurs classes seraient absentes du CSS final.
+ *
+ * Une ligne par paquet, chemin complet : un globe de repertoires ne resout
+ * rien ici et fait echouer le scan en silence. Ajouter un module sans ajouter
+ * sa ligne ne casse pas la compilation — la page sort simplement sans mise en
+ * forme, ce qui se remarque bien plus tard.
  */
 @source '../../../../packages/core/src';
+@source '../../../../packages/commande/src';

@@ -292,6 +292,21 @@ export type BlocCtaDoc = BaseBloc & {
   boutons?: LienDoc[] | null
 }
 
+/**
+ * Bloc apporte par un module optionnel.
+ *
+ * Le socle n'en connait ni les champs ni le rendu : il se contente de le
+ * transmettre au composant enregistre pour ce `blockType`. C'est ce qui permet
+ * a un module d'ajouter des blocs sans que le socle ait a l'importer, et donc
+ * sans qu'il pese sur les clients qui ne l'activent pas.
+ */
+export type BlocExterne = {
+  blockType: string
+  id?: string | null
+  apparence?: ApparenceDoc | null
+  [champ: string]: unknown
+}
+
 export type BlocContenu =
   | BlocHeroDoc
   | BlocGalerieDoc

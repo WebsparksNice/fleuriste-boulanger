@@ -61,6 +61,9 @@ const seed = async () => {
 
   payload.logger.info('Nettoyage des collections...')
   for (const collection of [
+    'reservations-creneaux',
+    'commandes',
+    'evenements-stripe',
     'pages',
     'produits',
     'categories-produits',
@@ -136,12 +139,18 @@ const seed = async () => {
     disponibilite?: NonNullable<Produit['disponibilite']>
     miseEnAvant?: boolean
     ordre: number
+    /** Champs apportés par le module de commande. */
+    prixEuros: number
+    delaiPreparationHeures?: number
+    quantiteMax?: number
   }
 
   const produits: ProduitDemo[] = [
     {
       nom: 'Pain au levain',
       slug: 'pain-au-levain',
+      prixEuros: 4.2,
+      quantiteMax: 4,
       image: pain.id,
       categorie: pains.id,
       prix: 'à partir de 4,20 €',
@@ -153,6 +162,8 @@ const seed = async () => {
     {
       nom: 'Baguette de tradition',
       slug: 'baguette-de-tradition',
+      prixEuros: 1.3,
+      quantiteMax: 12,
       image: baguette.id,
       categorie: pains.id,
       prix: '1,30 €',
@@ -164,6 +175,8 @@ const seed = async () => {
     {
       nom: 'Croissant au beurre',
       slug: 'croissant-au-beurre',
+      prixEuros: 1.4,
+      quantiteMax: 20,
       image: croissant.id,
       categorie: viennoiseries.id,
       prix: '1,40 €',
@@ -175,6 +188,8 @@ const seed = async () => {
     {
       nom: 'Pain de campagne',
       slug: 'pain-de-campagne',
+      prixEuros: 3.8,
+      quantiteMax: 4,
       image: pain.id,
       categorie: pains.id,
       prix: 'à partir de 3,80 €',
@@ -185,6 +200,8 @@ const seed = async () => {
     {
       nom: 'Tarte aux fruits de saison',
       slug: 'tarte-aux-fruits-de-saison',
+      prixEuros: 3.5,
+      quantiteMax: 6,
       image: tarte.id,
       categorie: patisseries.id,
       prix: 'à partir de 3,50 € la part',
@@ -196,6 +213,9 @@ const seed = async () => {
     {
       nom: 'Galette des rois',
       slug: 'galette-des-rois',
+      prixEuros: 18,
+      delaiPreparationHeures: 24,
+      quantiteMax: 2,
       image: tarte.id,
       categorie: patisseries.id,
       prix: 'à partir de 18 €',
@@ -220,6 +240,11 @@ const seed = async () => {
         disponibilite: produit.disponibilite ?? 'permanent',
         miseEnAvant: produit.miseEnAvant ?? false,
         ordre: produit.ordre,
+        // Module de commande
+        prix: produit.prixEuros,
+        disponible: true,
+        delaiPreparationHeures: produit.delaiPreparationHeures ?? 0,
+        quantiteMaxParCommande: produit.quantiteMax ?? 10,
         _status: 'published',
       },
     })
@@ -454,6 +479,34 @@ const seed = async () => {
         description:
           'Boulangerie artisanale au levain à Lyon 3e. Pains de tradition, viennoiseries au beurre et pâtisseries de saison, cuits sur place chaque jour.',
       },
+    },
+  })
+
+  payload.logger.info('Reglages des commandes...')
+  await payload.updateGlobal({
+    slug: 'config-commande',
+    data: {
+      dureeCreneauMinutes: 15,
+      capaciteParCreneau: 3,
+      delaiMinimumHeures: 2,
+      horizonJours: 7,
+      minutesAvantExpiration: 30,
+      horairesRetrait: [
+        { jour: 'lundi', ferme: true, plages: [] },
+        { jour: 'mardi', ferme: false, plages: [{ debut: '07:30', fin: '12:30' }, { debut: '16:00', fin: '19:00' }] },
+        { jour: 'mercredi', ferme: false, plages: [{ debut: '07:30', fin: '12:30' }, { debut: '16:00', fin: '19:00' }] },
+        { jour: 'jeudi', ferme: false, plages: [{ debut: '07:30', fin: '12:30' }, { debut: '16:00', fin: '19:00' }] },
+        { jour: 'vendredi', ferme: false, plages: [{ debut: '07:30', fin: '12:30' }, { debut: '16:00', fin: '19:00' }] },
+        { jour: 'samedi', ferme: false, plages: [{ debut: '07:30', fin: '18:30' }] },
+        { jour: 'dimanche', ferme: false, plages: [{ debut: '07:30', fin: '12:30' }] },
+      ],
+      joursFermes: [],
+      // Le paiement en ligne reste éteint tant que les clés Stripe du client
+      // ne sont pas en place : l'activer sans clés afficherait un choix qui
+      // échouerait au moment de payer.
+      paiementEnLigne: Boolean(process.env.STRIPE_SECRET_KEY),
+      paiementSurPlace: true,
+      messageConfirmation: 'À tout bientôt rue de la Villette !',
     },
   })
 

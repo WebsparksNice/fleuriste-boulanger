@@ -31,6 +31,11 @@ const ALLERGENES = [
 type OptionsProduits = {
   /** Affiche le champ allergenes : utile en boulangerie, hors sujet chez un fleuriste. */
   allergenes?: boolean
+  /**
+   * Onglet ajoute par un module optionnel (prix reel, delai de preparation...).
+   * Le module nomme son propre onglet : le socle ne prejuge pas de son contenu.
+   */
+  ongletSupplementaire?: { label: string; fields: Field[] }
   previsualisation?: NonNullable<CollectionConfig['admin']>['preview']
   livePreview?: NonNullable<CollectionConfig['admin']>['livePreview']
 }
@@ -44,6 +49,7 @@ type OptionsProduits = {
  */
 export const Produits = ({
   allergenes = false,
+  ongletSupplementaire,
   previsualisation,
   livePreview,
 }: OptionsProduits = {}): CollectionConfig => ({
@@ -174,6 +180,7 @@ export const Produits = ({
             },
           ],
         },
+        ...(ongletSupplementaire ? [ongletSupplementaire] : []),
         {
           label: 'Referencement',
           fields: [champSeo()],
