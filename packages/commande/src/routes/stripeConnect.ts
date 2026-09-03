@@ -1,7 +1,11 @@
 import { getPayload } from 'payload'
 
 import type { ModuleCommande } from '../config'
-import { CHEMIN_LIAISON_STRIPE, CHEMIN_RETOUR_STRIPE } from '../chemins'
+import {
+  CHEMIN_CONFIRMATION_STRIPE,
+  CHEMIN_LIAISON_STRIPE,
+  CHEMIN_RETOUR_STRIPE,
+} from '../chemins'
 import {
   clientIdConnect,
   detailsCompte,
@@ -80,14 +84,17 @@ export const creerRouteConnexionStripe = (module: ModuleCommande) => {
  *
  * Cette requête arrive d'un autre domaine : le navigateur annonce
  * `Sec-Fetch-Site: cross-site` et Payload refuse alors la session en cookie.
- * On ne peut donc pas authentifier ici, et on n'enregistre rien : on vérifie le
- * jeton, on lit le compte chez Stripe, et on présente une page de confirmation
- * dont le bouton repart en POST depuis notre propre domaine.
+ * On ne peut donc pas authentifier ici, et on n'enregistre rien.
  *
- * Ce détour a un autre mérite : lier le compte qui encaissera l'argent mérite
- * un geste explicite, pas un enregistrement silencieux au retour d'un tiers.
+ * Le code d'autorisation est échangé immédiatement, puis la page repart en
+ * redirection vers une adresse qui ne le contient plus. C'est nécessaire :
+ * Stripe révoque la connexion si un code d'autorisation est présenté deux
+ * fois, et laisser le code dans la barre d'adresse suffirait à ce qu'un
+ * rafraîchissement défasse la liaison qui vient d'être établie.
  */
 export const creerRouteRetourStripe = (module: ModuleCommande) => {
+  const { site } = module
+
   return async (requete: Request): Promise<Response> => {
     const parametres = new URL(requete.url).searchParams
 
@@ -121,20 +128,51 @@ export const creerRouteRetourStripe = (module: ModuleCommande) => {
 
     if (!compte) return erreur('Stripe n’a pas renvoyé de compte exploitable.')
 
-    const liaison = signerJeton({ u: String(contenu.u), a: 'liaison', c: compte.id })
+    const liaison = signerJeton({
+      u: String(contenu.u),
+      a: 'liaison',
+      c: compte.id,
+      nom: compte.nom ?? '',
+      actif: compte.chargesActives ? 1 : 0,
+    })
+
+    return Response.redirect(
+      `${site.urlSite}${CHEMIN_CONFIRMATION_STRIPE}?liaison=${encodeURIComponent(liaison)}`,
+      303,
+    )
+  }
+}
+
+/**
+ * Page de confirmation.
+ *
+ * Ne fait aucun appel à Stripe : tout ce qu'elle affiche vient du jeton signé,
+ * ce qui la rend librement rafraîchissable. Son bouton repart en POST depuis
+ * notre domaine, seule requête où la session administrateur est vérifiable.
+ */
+export const creerRouteConfirmationStripe = () => {
+  return async (requete: Request): Promise<Response> => {
+    const liaison = new URL(requete.url).searchParams.get('liaison')
+    const contenu = verifierJeton(liaison)
+
+    if (!contenu || contenu.a !== 'liaison' || typeof contenu.c !== 'string') {
+      return erreur('Demande expirée. Relancez la liaison depuis les réglages.')
+    }
+
+    const nom = typeof contenu.nom === 'string' && contenu.nom ? contenu.nom : contenu.c
 
     return page(
       'Confirmer la liaison',
       `<h1 style="margin:0 0 1rem;font-size:1.4rem">Lier ce compte Stripe ?</h1>
 <p style="margin:0 0 0.5rem">Les paiements des commandes arriveront sur :</p>
-<p style="margin:0 0 1.5rem;font-size:1.1rem"><strong>${echapper(compte.nom ?? compte.id)}</strong></p>
+<p style="margin:0 0 1.5rem;font-size:1.1rem"><strong>${echapper(nom)}</strong></p>
 ${
-  compte.chargesActives
+  contenu.actif === 1
     ? ''
-    : '<p style="margin:0 0 1.5rem;color:#b45309">Ce compte n’est pas encore autorisé à encaisser. Vous pourrez le lier maintenant et terminer sa configuration sur Stripe ensuite.</p>'
+    : '<p style="margin:0 0 1.5rem;color:#b45309">Ce compte n’est pas encore autorisé à encaisser. Vous pouvez le lier maintenant et terminer sa configuration sur Stripe ensuite.</p>'
 }
 <form method="post" action="${CHEMIN_LIAISON_STRIPE}">
-<input type="hidden" name="liaison" value="${echapper(liaison)}">
+<input type="hidden" name="liaison" value="${echapper(liaison ?? '')}">
 <button type="submit" style="min-height:2.75rem;padding:0 1.25rem;border-radius:6px;border:0;background:#635bff;color:#fff;font-size:1rem;cursor:pointer">Confirmer la liaison</button>
 </form>
 <p style="margin:1.5rem 0 0"><a href="${CHEMIN_ADMIN_REGLAGES}" style="color:#6b7280">Annuler</a></p>`,

@@ -135,6 +135,44 @@ encaisseur ni responsable des litiges et des remboursements.
 Le commerçant fait le reste seul : *Réglages des commandes → Connecter mon
 compte Stripe*.
 
+### Tester en local
+
+Stripe n'exige HTTPS pour l'URL de retour **qu'en mode production**. En mode
+test, `http://localhost` est accepté.
+
+1. Dans les réglages Connect de la plateforme (mode test), ajouter l'URI de
+   redirection : `http://localhost:3000/api/commande/stripe/retour`
+2. `.env` :
+   ```
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+   STRIPE_SECRET_KEY=sk_test_...
+   STRIPE_CONNECT_CLIENT_ID=ca_...          # celui du mode test
+   ```
+3. Pour recevoir les webhooks, la CLI Stripe — Stripe ne peut pas appeler
+   votre machine :
+   ```bash
+   stripe listen --forward-connect-to http://localhost:3000/api/commande/webhook-stripe
+   ```
+   Elle affiche un `whsec_...` **différent de celui du tableau de bord** : c'est
+   lui qu'il faut mettre dans `STRIPE_WEBHOOK_SECRET`. `--forward-connect-to`
+   et non `--forward-to` : les paiements ont lieu sur le compte connecté, leurs
+   événements sont donc des événements Connect.
+
+**Trois pièges, dans l'ordre où on les rencontre :**
+
+- **L'URI doit correspondre au caractère près.** `http://localhost:3000` et
+  `http://127.0.0.1:3000` sont deux adresses différentes pour Stripe, qui
+  répondra `invalid_redirect_uri`.
+- **Naviguez par la même adresse que `NEXT_PUBLIC_SITE_URL`.** Le socle
+  configure `csrf` avec cette valeur ; ouvrir l'administration sur
+  `127.0.0.1:3000` alors que la variable dit `localhost:3000` fait refuser la
+  session par Payload, sans message clair.
+- **Le port doit suivre.** `pnpm dev` écoute sur 3000 ; si vous en changez,
+  changez aussi la variable et l'URI enregistrée chez Stripe.
+
+Le mode test de Stripe fournit des comptes connectés de démonstration : vous
+pouvez donc dérouler la liaison de bout en bout sans compte réel.
+
 ### Deux modes qui s'excluent
 
 `STRIPE_CONNECT_CLIENT_ID` décide à lui seul :

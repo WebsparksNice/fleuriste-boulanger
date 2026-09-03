@@ -13,7 +13,7 @@
  * Usage :
  *   node apps/demo-boulangerie/tests/stripe-connect.e2e.mjs [url]
  */
-const BASE = process.argv[2] ?? process.env.URL_TEST ?? 'http://127.0.0.1:3111'
+const BASE = process.argv[2] ?? process.env.URL_TEST ?? 'http://localhost:3000'
 let echecs = 0
 
 const verifier = (nom, ok, detail = '') => {
@@ -96,9 +96,69 @@ const liaisonAvecEtat = await fetch(`${BASE}/api/commande/stripe/liaison`, {
 })
 verifier('jeton de l’étape précédente rejeté', liaisonAvecEtat.status === 400, String(liaisonAvecEtat.status))
 
+console.log('\n— Page de confirmation et enregistrement —')
+// Le jeton de liaison est signé avec PAYLOAD_SECRET, que le développeur
+// connaît : on peut donc jouer l'étape qui suit l'échange OAuth sans compte
+// Stripe réel, et vérifier tout ce qui nous appartient.
+const { createHmac, randomUUID } = await import('node:crypto')
+const secret = process.env.PAYLOAD_SECRET ?? 'cle-de-developpement-a-remplacer'
+const signer = (contenu) => {
+  const charge = Buffer.from(
+    JSON.stringify({ ...contenu, _t: Date.now(), _z: randomUUID() }),
+  ).toString('base64url')
+  return `${charge}.${createHmac('sha256', secret).update(charge).digest('base64url')}`
+}
+
+const moi = await (await fetch(`${BASE}/api/utilisateurs/me`, { headers: admin })).json()
+const jetonLiaison = signer({
+  u: String(moi.user?.id),
+  a: 'liaison',
+  c: 'acct_test_local',
+  nom: 'Boulangerie de test',
+  actif: 1,
+})
+
+const pageConfirmation = await (await fetch(
+  `${BASE}/api/commande/stripe/confirmer?liaison=${encodeURIComponent(jetonLiaison)}`,
+)).text()
+verifier('la confirmation affiche le nom du compte', pageConfirmation.includes('Boulangerie de test'))
+verifier('un bouton de confirmation est proposé', pageConfirmation.includes('Confirmer la liaison'))
+
+const confirmationInvalide = await fetch(`${BASE}/api/commande/stripe/confirmer?liaison=bidon.bidon`)
+verifier('jeton invalide : page refusée', confirmationInvalide.status === 400, String(confirmationInvalide.status))
+
+const enregistrement = await fetch(`${BASE}/api/commande/stripe/liaison`, {
+  method: 'POST',
+  headers: { ...admin, 'content-type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({ liaison: jetonLiaison }),
+  redirect: 'manual',
+})
+verifier('liaison enregistrée', enregistrement.status === 303, String(enregistrement.status))
+verifier(
+  'retour vers les réglages',
+  (enregistrement.headers.get('location') ?? '').endsWith('/admin/globals/config-commande'),
+  enregistrement.headers.get('location') ?? '',
+)
+
+// Un jeton signé par quelqu'un d'autre ne doit rien pouvoir enregistrer.
+const jetonAutreUtilisateur = signer({ u: '999999', a: 'liaison', c: 'acct_pirate', nom: 'Pirate' })
+const usurpation = await fetch(`${BASE}/api/commande/stripe/liaison`, {
+  method: 'POST',
+  headers: { ...admin, 'content-type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({ liaison: jetonAutreUtilisateur }),
+  redirect: 'manual',
+})
+verifier('jeton lancé par un autre compte : refusé', usurpation.status === 403, String(usurpation.status))
+
 console.log('\n— Déconnexion —')
 const dcAnonyme = await fetch(`${BASE}/api/commande/stripe/deconnexion`, { method: 'POST' })
 verifier('anonyme refusé', dcAnonyme.status === 401, String(dcAnonyme.status))
+
+const deconnexion = await fetch(`${BASE}/api/commande/stripe/deconnexion`, {
+  method: 'POST',
+  headers: admin,
+})
+verifier('compte délié', deconnexion.status === 200, String(deconnexion.status))
 
 console.log('\n— Sans compte lié, aucun paiement en ligne —')
 const formulaire = await (await fetch(`${BASE}/commander`)).text()

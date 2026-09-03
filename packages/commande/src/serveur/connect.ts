@@ -22,6 +22,7 @@ import Stripe from 'stripe'
  */
 
 export {
+  CHEMIN_CONFIRMATION_STRIPE,
   CHEMIN_CONNEXION_STRIPE,
   CHEMIN_DECONNEXION_STRIPE,
   CHEMIN_LIAISON_STRIPE,
@@ -48,9 +49,12 @@ type ContenuJeton = Record<string, string | number>
  * quelqu'un d'autre.
  */
 export const signerJeton = (contenu: ContenuJeton): string => {
-  const charge = Buffer.from(JSON.stringify({ ...contenu, t: Date.now(), n: randomUUID() })).toString(
-    'base64url',
-  )
+  // `_t` et `_z` sont préfixés pour ne jamais entrer en collision avec une clé
+  // du contenu : `n` avait discrètement écrasé le nom du compte par le grain
+  // aléatoire, et la page de confirmation affichait un identifiant technique.
+  const charge = Buffer.from(
+    JSON.stringify({ ...contenu, _t: Date.now(), _z: randomUUID() }),
+  ).toString('base64url')
   const signature = createHmac('sha256', secret()).update(charge).digest('base64url')
   return `${charge}.${signature}`
 }
@@ -69,9 +73,9 @@ export const verifierJeton = (jeton: string | null): ContenuJeton | null => {
 
   try {
     const contenu = JSON.parse(Buffer.from(charge, 'base64url').toString()) as ContenuJeton & {
-      t: number
+      _t: number
     }
-    if (typeof contenu.t !== 'number' || Date.now() - contenu.t > VALIDITE_JETON) return null
+    if (typeof contenu._t !== 'number' || Date.now() - contenu._t > VALIDITE_JETON) return null
     return contenu
   } catch {
     return null

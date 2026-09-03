@@ -21,8 +21,9 @@ describe('jetons signés de la liaison Stripe', () => {
     const [charge, signature] = jeton.split('.')
 
     // On remplace l'utilisateur par un autre, en gardant la signature d'origine.
-    const falsifiee = Buffer.from(JSON.stringify({ u: '99', a: 'connexion', t: Date.now(), n: 'x' }))
-      .toString('base64url')
+    const falsifiee = Buffer.from(
+      JSON.stringify({ u: '99', a: 'connexion', _t: Date.now(), _z: 'x' }),
+    ).toString('base64url')
 
     assert.equal(verifierJeton(`${falsifiee}.${signature}`), null)
     assert.ok(charge)
@@ -49,9 +50,9 @@ describe('jetons signés de la liaison Stripe', () => {
   it('refuse un jeton périmé', () => {
     // Jeton daté d'une heure, alors que la validité est de dix minutes.
     const ancien = Date.now() - 60 * 60 * 1000
-    const charge = Buffer.from(JSON.stringify({ u: '42', a: 'connexion', t: ancien, n: 'x' })).toString(
-      'base64url',
-    )
+    const charge = Buffer.from(
+      JSON.stringify({ u: '42', a: 'connexion', _t: ancien, _z: 'x' }),
+    ).toString('base64url')
     const signature = createHmac('sha256', process.env.PAYLOAD_SECRET as string)
       .update(charge)
       .digest('base64url')
@@ -64,6 +65,17 @@ describe('jetons signés de la liaison Stripe', () => {
     assert.equal(verifierJeton(''), null)
     assert.equal(verifierJeton('sans-point'), null)
     assert.equal(verifierJeton('a.b.c'), null)
+  })
+
+  it('ne laisse pas le grain aléatoire écraser le contenu', () => {
+    // Le nom du compte Stripe voyage dans le jeton : une collision de clés le
+    // remplacerait silencieusement par l'identifiant technique.
+    const jeton = signerJeton({ u: '42', a: 'liaison', c: 'acct_1', nom: 'Boulangerie Martin' })
+    const contenu = verifierJeton(jeton)
+
+    assert.ok(contenu)
+    assert.equal(contenu.nom, 'Boulangerie Martin')
+    assert.equal(contenu.c, 'acct_1')
   })
 
   it('produit un jeton différent à chaque appel', () => {
