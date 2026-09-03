@@ -198,6 +198,9 @@ encaissements du commerçant sur le compte de l'agence.
   qui encaissera devient un geste explicite.
 - Le webhook n'accepte que les événements dont le compte est celui du site : un
   point de terminaison Connect reçoit ceux de tous les comptes de la plateforme.
+- L'état du compte est rafraîchi par `account.updated` plutôt que figé à la
+  liaison : un commerçant qui termine son inscription chez Stripe devient
+  encaissant sans avoir à délier puis relier.
 
 ## Commandes : ce sur quoi reposent les garanties
 
@@ -250,4 +253,5 @@ même droplet, Cloudflare devant en DNS/CDN uniquement.
 | `pnpm --filter @websparks/commande test` | tests unitaires des créneaux et du fuseau |
 | `pnpm --filter <app> test:e2e` | parcours de commande, serveur en marche requis |
 | `pnpm --filter <app> test:stripe` | liaison Stripe Connect, serveur en marche requis |
+| `pnpm --filter <app> test:webhook` | webhooks signés localement, serveur en marche requis |
 | `pnpm --filter <app> test:vue-commandes` | rend la vue admin « commandes du jour » |

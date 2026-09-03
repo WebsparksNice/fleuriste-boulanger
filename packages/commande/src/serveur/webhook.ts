@@ -98,6 +98,56 @@ export const traiterWebhookStripe = async ({
     return { statut: 200, message: 'Événement déjà traité' }
   }
 
+  /*
+   * L'état d'un compte connecté évolue après la liaison : le commerçant termine
+   * son inscription chez Stripe, et c'est seulement là qu'il devient capable
+   * d'encaisser. Sans écouter cet événement, le site resterait sur la photo
+   * prise au moment du branchement et afficherait indéfiniment « ce compte ne
+   * peut pas encaisser », sans autre issue que délier puis relier.
+   */
+  if (evenement.type === 'account.updated') {
+    const compte = evenement.data.object as Stripe.Account
+
+    await payload.updateGlobal({
+      slug: 'config-commande',
+      overrideAccess: true,
+      data: {
+        stripeChargesActives: Boolean(compte.charges_enabled),
+        stripeCompteNom:
+          compte.business_profile?.name ??
+          compte.settings?.dashboard?.display_name ??
+          compte.email ??
+          null,
+      },
+    })
+
+    return {
+      statut: 200,
+      message: compte.charges_enabled ? 'Compte apte à encaisser' : 'Compte pas encore apte',
+    }
+  }
+
+  /*
+   * Le commerçant peut révoquer l'accès depuis son propre tableau de bord
+   * Stripe. Le site doit l'apprendre, sinon il continuerait à proposer un
+   * paiement en ligne qui échouerait à chaque tentative.
+   */
+  if (evenement.type === 'account.application.deauthorized') {
+    await payload.updateGlobal({
+      slug: 'config-commande',
+      overrideAccess: true,
+      data: {
+        stripeCompteId: null,
+        stripeCompteNom: null,
+        stripeChargesActives: false,
+        stripeConnecteLe: null,
+        paiementEnLigne: false,
+      },
+    })
+
+    return { statut: 200, message: 'Compte délié depuis Stripe' }
+  }
+
   if (evenement.type !== 'checkout.session.completed') {
     return { statut: 200, message: `Type ignoré : ${evenement.type}` }
   }
