@@ -24,22 +24,33 @@ Le site répond sur http://localhost:3000, l'administration sur `/admin`
 ## Créer un nouveau client
 
 ```bash
-cp -r apps/demo-boulangerie apps/fleuriste-durand
+pnpm nouveau-client fleuriste-durand --metier fleuriste --nom "Fleurs Durand"
 ```
 
-Puis, dans la copie :
+Le script copie l'app de démonstration, la débarrasse de son contenu, écrit une
+configuration neutre et un `.env` avec un secret fraîchement tiré. Il imprime
+ensuite les étapes qui exigent une base de données.
 
-1. `package.json` — changer le `name`
-2. `src/site.config.ts` — **le seul fichier à retoucher** : couleurs, polices,
-   rayons, espacements, langues, segments d'URL
-3. `src/polices.ts` — les polices du client (`next/font` exige des appels
-   statiques, le socle ne peut donc pas les charger lui-même)
-4. `src/payload.config.ts` — retirer `optionsProduits: { allergenes: true }`
-   pour un métier hors alimentaire
-5. `.env` — base de données dédiée
+| Option | Effet |
+|---|---|
+| `--metier <type>` | `boulangerie`, `fleuriste`, `restaurant`… Détermine le type de commerce et la présence de la liste des allergènes |
+| `--nom "<nom>"` | Nom du commerce (déduit du slug par défaut) |
+| `--langues fr,en` | Langues du site, la première étant celle par défaut |
+| `--sans-commande` | N'installe pas le module de click & collect |
 
-Le reste vient du socle (code) et de Payload (contenu). **Aucune donnée client
-n'est écrite en dur dans `packages/core`.**
+Les types Payload et la migration sont **régénérés**, jamais copiés : ils
+dépendent de la configuration. La liste des allergènes, par exemple, ajoute une
+colonne — réutiliser la migration d'un boulanger chez un fleuriste produirait
+un schéma faux.
+
+Reste à faire ensuite, à la main :
+
+- `src/site.config.ts` — couleurs, polices, rayons, espacements
+- `src/polices.ts` — les polices du client (`next/font` exige des appels
+  statiques, le socle ne peut donc pas les charger lui-même)
+
+Le reste vient du socle (code) et de Payload (contenu saisi par le commerçant).
+**Aucune donnée client n'est écrite en dur dans `packages/core`.**
 
 ## Modules optionnels
 

@@ -11,7 +11,8 @@
     "build": "pnpm --filter demo-boulangerie build",
     "start": "pnpm --filter demo-boulangerie start",
     "types": "pnpm --filter demo-boulangerie types",
-    "typecheck": "pnpm -r exec tsc --noEmit"
+    "typecheck": "pnpm -r exec tsc --noEmit",
+    "nouveau-client": "node scripts/nouveau-client.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3"
