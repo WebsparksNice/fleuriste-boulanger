@@ -1,6 +1,7 @@
 import { Conteneur } from '../components/ui/Conteneur'
 import { GroupeBoutons } from '../components/ui/Bouton'
 import { Section } from '../components/ui/Section'
+import { Surtitre } from '../components/ui/Surtitre'
 import { Titre } from '../components/ui/Titre'
 import { resoudreLiens } from '../lib/liens'
 import type { BlocCtaDoc } from '../types'
@@ -13,6 +14,7 @@ export const Cta = ({ bloc, config, contexte }: ProprietesBloc<BlocCtaDoc>) => {
     <Section apparence={bloc.apparence ?? { fond: 'primaire' }}>
       <Conteneur>
         <div className="mx-auto max-w-2xl space-y-5 text-center">
+          <Surtitre>{bloc.surtitre}</Surtitre>
           <Titre>{bloc.titre}</Titre>
           {bloc.texte ? <p className="text-lg opacity-90">{bloc.texte}</p> : null}
           <GroupeBoutons liens={boutons} className="justify-center" />

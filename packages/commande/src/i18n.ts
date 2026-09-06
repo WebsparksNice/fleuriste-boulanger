@@ -5,11 +5,28 @@ export type DictionnaireCommande = {
   aucunProduit: string
   quantite: string
   quantitePour: (produit: string) => string
+  panier: string
+  panierVide: string
+  panierVideAide: string
+  voirLesProduits: string
+  ajouterAuPanier: string
+  ajouterAuPanierDe: (produit: string) => string
+  retirer: string
+  retirerDuPanier: (produit: string) => string
+  mettreAJour: string
+  augmenterQuantite: (produit: string) => string
+  diminuerQuantite: (produit: string) => string
+  viderLePanier: string
+  articles: (nombre: number) => string
+  sousTotal: string
+  lignesRetirees: (nombre: number) => string
+  continuerMesAchats: string
   creneau: string
   choisirCreneau: string
   creneauComplet: string
   placesRestantes: (places: number) => string
   aucunCreneau: string
+  informationsRetrait: string
   vosCoordonnees: string
   nom: string
   telephone: string
@@ -18,7 +35,9 @@ export type DictionnaireCommande = {
   notesAide: string
   paiement: string
   payerEnLigne: string
+  payerEnLigneAide: string
   payerSurPlace: string
+  payerSurPlaceAide: string
   valider: string
   total: string
   totalIndicatif: string
@@ -42,11 +61,31 @@ export const fr: DictionnaireCommande = {
   aucunProduit: 'Aucun produit n’est disponible à la commande pour le moment.',
   quantite: 'Quantité',
   quantitePour: (produit) => `Quantité pour ${produit}`,
+  panier: 'Panier',
+  panierVide: 'Votre panier est vide.',
+  panierVideAide: 'Ajoutez des produits pour passer commande.',
+  voirLesProduits: 'Voir les produits',
+  ajouterAuPanier: 'Ajouter',
+  ajouterAuPanierDe: (produit) => `Ajouter ${produit} au panier`,
+  retirer: 'Retirer',
+  retirerDuPanier: (produit) => `Retirer ${produit} du panier`,
+  mettreAJour: 'Mettre à jour',
+  augmenterQuantite: (produit) => `Augmenter la quantité de ${produit}`,
+  diminuerQuantite: (produit) => `Diminuer la quantité de ${produit}`,
+  viderLePanier: 'Vider le panier',
+  articles: (nombre) => (nombre === 1 ? '1 article' : `${nombre} articles`),
+  sousTotal: 'Sous-total',
+  lignesRetirees: (nombre) =>
+    nombre === 1
+      ? 'Un produit de votre panier n’est plus disponible, il en a été retiré.'
+      : `${nombre} produits de votre panier ne sont plus disponibles, ils en ont été retirés.`,
+  continuerMesAchats: 'Continuer mes achats',
   creneau: 'Créneau de retrait',
   choisirCreneau: 'Choisissez un créneau',
   creneauComplet: 'complet',
   placesRestantes: (places) => (places === 1 ? '1 place' : `${places} places`),
   aucunCreneau: 'Aucun créneau n’est disponible pour l’instant. Réessayez plus tard.',
+  informationsRetrait: 'Retrait & coordonnées',
   vosCoordonnees: 'Vos coordonnées',
   nom: 'Nom',
   telephone: 'Téléphone',
@@ -55,7 +94,9 @@ export const fr: DictionnaireCommande = {
   notesAide: 'Une allergie, une occasion particulière, un mot à écrire sur le gâteau.',
   paiement: 'Paiement',
   payerEnLigne: 'Payer maintenant en ligne',
+  payerEnLigneAide: 'Carte bancaire, paiement sécurisé au moment de la commande.',
   payerSurPlace: 'Payer au retrait',
+  payerSurPlaceAide: 'Rien à régler maintenant : vous payez en boutique.',
   valider: 'Valider ma commande',
   total: 'Total',
   totalIndicatif: 'Le total est calculé et confirmé après validation.',
@@ -93,11 +134,31 @@ export const en: DictionnaireCommande = {
   aucunProduit: 'No items are available to order right now.',
   quantite: 'Quantity',
   quantitePour: (produit) => `Quantity for ${produit}`,
+  panier: 'Basket',
+  panierVide: 'Your basket is empty.',
+  panierVideAide: 'Add items to place an order.',
+  voirLesProduits: 'Browse items',
+  ajouterAuPanier: 'Add',
+  ajouterAuPanierDe: (produit) => `Add ${produit} to basket`,
+  retirer: 'Remove',
+  retirerDuPanier: (produit) => `Remove ${produit} from basket`,
+  mettreAJour: 'Update',
+  augmenterQuantite: (produit) => `Increase quantity of ${produit}`,
+  diminuerQuantite: (produit) => `Decrease quantity of ${produit}`,
+  viderLePanier: 'Empty basket',
+  articles: (nombre) => (nombre === 1 ? '1 item' : `${nombre} items`),
+  sousTotal: 'Subtotal',
+  lignesRetirees: (nombre) =>
+    nombre === 1
+      ? 'An item in your basket is no longer available and has been removed.'
+      : `${nombre} items in your basket are no longer available and have been removed.`,
+  continuerMesAchats: 'Continue shopping',
   creneau: 'Collection slot',
   choisirCreneau: 'Choose a slot',
   creneauComplet: 'full',
   placesRestantes: (places) => (places === 1 ? '1 place left' : `${places} places left`),
   aucunCreneau: 'No slot is available right now. Please try again later.',
+  informationsRetrait: 'Collection & details',
   vosCoordonnees: 'Your details',
   nom: 'Name',
   telephone: 'Phone',
@@ -106,7 +167,9 @@ export const en: DictionnaireCommande = {
   notesAide: 'An allergy, a special occasion, a message to write on the cake.',
   paiement: 'Payment',
   payerEnLigne: 'Pay online now',
+  payerEnLigneAide: 'Card payment, secured at the time of ordering.',
   payerSurPlace: 'Pay on collection',
+  payerSurPlaceAide: 'Nothing to pay now: you settle up in the shop.',
   valider: 'Place my order',
   total: 'Total',
   totalIndicatif: 'The total is calculated and confirmed after you place the order.',

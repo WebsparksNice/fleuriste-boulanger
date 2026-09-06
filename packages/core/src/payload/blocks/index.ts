@@ -2,6 +2,7 @@ import type { Block } from 'payload'
 
 import { blocContact } from './contact'
 import { blocCta } from './cta'
+import { blocEtapes } from './etapes'
 import { blocFaq } from './faq'
 import { blocGalerie } from './galerie'
 import { blocHero } from './hero'
@@ -22,6 +23,7 @@ export const blocsDeContenu: Block[] = [
   blocHoraires,
   blocTemoignages,
   blocFaq,
+  blocEtapes,
   blocContact,
   blocCta,
 ]
@@ -29,6 +31,7 @@ export const blocsDeContenu: Block[] = [
 export {
   blocContact,
   blocCta,
+  blocEtapes,
   blocFaq,
   blocGalerie,
   blocHero,

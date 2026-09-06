@@ -15,10 +15,16 @@ type ProprietesTitre = {
   children: ReactNode
   /** Niveau semantique. Le h1 appartient a la banniere de la page. */
   niveau?: NiveauTitre
+  /** Permet a une region de se nommer par son titre, via `aria-labelledby`. */
+  id?: string
   className?: string
 }
 
-export const Titre = ({ children, niveau = 2, className }: ProprietesTitre) => {
+export const Titre = ({ children, niveau = 2, id, className }: ProprietesTitre) => {
   const Balise = `h${niveau}` as const
-  return <Balise className={cn(tailles[niveau], className)}>{children}</Balise>
+  return (
+    <Balise id={id} className={cn(tailles[niveau], className)}>
+      {children}
+    </Balise>
+  )
 }

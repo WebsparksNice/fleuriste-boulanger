@@ -176,6 +176,7 @@ export interface Page {
         | BlocHoraires
         | BlocTemoignages
         | BlocFaq
+        | BlocEtapes
         | BlocContact
         | BlocCta
         | BlocCommande
@@ -192,6 +193,10 @@ export interface Page {
  */
 export interface BlocHero {
   variante: 'couverture' | 'lateral' | 'texte';
+  /**
+   * Court intitule affiche au-dessus du titre. Ex. : Le catalogue.
+   */
+  surtitre?: string | null;
   /**
    * Titre principal de la page (h1). Un seul par page.
    */
@@ -319,6 +324,10 @@ export interface BlocTexteImage {
   positionImage?: ('gauche' | 'droite') | null;
   formatImage?: ('paysage' | 'carre' | 'portrait') | null;
   image: number | Media;
+  /**
+   * Court intitule affiche au-dessus du titre. Ex. : Le catalogue.
+   */
+  surtitre?: string | null;
   titre?: string | null;
   texte?: {
     root: {
@@ -368,6 +377,10 @@ export interface BlocTexteImage {
  * via the `definition` "BlocProduits".
  */
 export interface BlocProduits {
+  /**
+   * Court intitule affiche au-dessus du titre. Ex. : Le catalogue.
+   */
+  surtitre?: string | null;
   titre?: string | null;
   intro?: {
     root: {
@@ -395,8 +408,16 @@ export interface BlocProduits {
   selection?: (number | Produit)[] | null;
   limite?: number | null;
   colonnes?: ('2' | '3' | '4') | null;
+  /**
+   * La presentation « carte » reprend le resume saisi sur chaque produit.
+   */
+  variante?: ('sobre' | 'carte') | null;
   afficherPrix?: boolean | null;
   afficherLienVoirTout?: boolean | null;
+  /**
+   * La seconde disposition convient aux sections qui ouvrent sur une grille.
+   */
+  dispositionEntete?: ('empilee' | 'repartie') | null;
   apparence?: ApparenceBloc;
   id?: string | null;
   blockName?: string | null;
@@ -437,6 +458,10 @@ export interface Produit {
    */
   ordre?: number | null;
   imagePrincipale: number | Media;
+  /**
+   * Une ou deux phrases, affichees sur la vignette en vitrine. La description complete, elle, reste sur la fiche.
+   */
+  resume?: string | null;
   description?: {
     root: {
       type: string;
@@ -593,6 +618,10 @@ export interface BlocHoraires {
  * via the `definition` "BlocTemoignages".
  */
 export interface BlocTemoignages {
+  /**
+   * Court intitule affiche au-dessus du titre. Ex. : Le catalogue.
+   */
+  surtitre?: string | null;
   titre?: string | null;
   mode?: ('recents' | 'selection') | null;
   limite?: number | null;
@@ -669,6 +698,50 @@ export interface Faq {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlocEtapes".
+ */
+export interface BlocEtapes {
+  /**
+   * Court intitule affiche au-dessus du titre. Ex. : Le catalogue.
+   */
+  surtitre?: string | null;
+  titre?: string | null;
+  intro?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Numerotez quand l ordre compte : les etapes d une commande.
+   */
+  numerotation?: ('chiffres' | 'aucune') | null;
+  colonnes?: ('2' | '3' | '4') | null;
+  elements: {
+    titre: string;
+    texte?: string | null;
+    id?: string | null;
+  }[];
+  /**
+   * La seconde disposition convient aux sections qui ouvrent sur une grille.
+   */
+  dispositionEntete?: ('empilee' | 'repartie') | null;
+  apparence?: ApparenceBloc;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'etapes';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "BlocContact".
  */
 export interface BlocContact {
@@ -706,6 +779,10 @@ export interface BlocContact {
  * via the `definition` "BlocCta".
  */
 export interface BlocCta {
+  /**
+   * Court intitule affiche au-dessus du titre. Ex. : Le catalogue.
+   */
+  surtitre?: string | null;
   titre: string;
   texte?: string | null;
   boutons?:
@@ -1090,6 +1167,7 @@ export interface PagesSelect<T extends boolean = true> {
         horaires?: T | BlocHorairesSelect<T>;
         temoignages?: T | BlocTemoignagesSelect<T>;
         faq?: T | BlocFaqSelect<T>;
+        etapes?: T | BlocEtapesSelect<T>;
         contact?: T | BlocContactSelect<T>;
         cta?: T | BlocCtaSelect<T>;
         commande?: T | BlocCommandeSelect<T>;
@@ -1105,6 +1183,7 @@ export interface PagesSelect<T extends boolean = true> {
  */
 export interface BlocHeroSelect<T extends boolean = true> {
   variante?: T;
+  surtitre?: T;
   titre?: T;
   sousTitre?: T;
   image?: T;
@@ -1145,6 +1224,7 @@ export interface BlocTexteImageSelect<T extends boolean = true> {
   positionImage?: T;
   formatImage?: T;
   image?: T;
+  surtitre?: T;
   titre?: T;
   texte?: T;
   boutons?:
@@ -1170,6 +1250,7 @@ export interface BlocTexteImageSelect<T extends boolean = true> {
  * via the `definition` "BlocProduits_select".
  */
 export interface BlocProduitsSelect<T extends boolean = true> {
+  surtitre?: T;
   titre?: T;
   intro?: T;
   mode?: T;
@@ -1177,8 +1258,10 @@ export interface BlocProduitsSelect<T extends boolean = true> {
   selection?: T;
   limite?: T;
   colonnes?: T;
+  variante?: T;
   afficherPrix?: T;
   afficherLienVoirTout?: T;
+  dispositionEntete?: T;
   apparence?: T | ApparenceBlocSelect<T>;
   id?: T;
   blockName?: T;
@@ -1235,6 +1318,7 @@ export interface BlocHorairesSelect<T extends boolean = true> {
  * via the `definition` "BlocTemoignages_select".
  */
 export interface BlocTemoignagesSelect<T extends boolean = true> {
+  surtitre?: T;
   titre?: T;
   mode?: T;
   limite?: T;
@@ -1253,6 +1337,28 @@ export interface BlocFaqSelect<T extends boolean = true> {
   mode?: T;
   selection?: T;
   genererJsonLd?: T;
+  apparence?: T | ApparenceBlocSelect<T>;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BlocEtapes_select".
+ */
+export interface BlocEtapesSelect<T extends boolean = true> {
+  surtitre?: T;
+  titre?: T;
+  intro?: T;
+  numerotation?: T;
+  colonnes?: T;
+  elements?:
+    | T
+    | {
+        titre?: T;
+        texte?: T;
+        id?: T;
+      };
+  dispositionEntete?: T;
   apparence?: T | ApparenceBlocSelect<T>;
   id?: T;
   blockName?: T;
@@ -1278,6 +1384,7 @@ export interface BlocContactSelect<T extends boolean = true> {
  * via the `definition` "BlocCta_select".
  */
 export interface BlocCtaSelect<T extends boolean = true> {
+  surtitre?: T;
   titre?: T;
   texte?: T;
   boutons?:
@@ -1329,6 +1436,7 @@ export interface ProduitsSelect<T extends boolean = true> {
   miseEnAvant?: T;
   ordre?: T;
   imagePrincipale?: T;
+  resume?: T;
   description?: T;
   prixIndicatif?: T;
   disponibilite?: T;

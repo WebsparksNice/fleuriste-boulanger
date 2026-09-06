@@ -70,6 +70,64 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  apps/fleuriste:
+    dependencies:
+      '@payloadcms/db-postgres':
+        specifier: 3.88.0
+        version: 3.88.0(payload@3.88.0(graphql@16.14.2)(typescript@5.9.3))
+      '@payloadcms/next':
+        specifier: 3.88.0
+        version: 3.88.0(@types/react@19.2.18)(graphql@16.14.2)(next@16.3.4(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4))(payload@3.88.0(graphql@16.14.2)(typescript@5.9.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
+      '@payloadcms/richtext-lexical':
+        specifier: 3.88.0
+        version: 3.88.0(@faceless-ui/modal@3.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@faceless-ui/scroll-info@2.0.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@payloadcms/next@3.88.0(@types/react@19.2.18)(graphql@16.14.2)(next@16.3.4(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4))(payload@3.88.0(graphql@16.14.2)(typescript@5.9.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(@types/react@19.2.18)(next@16.3.4(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4))(payload@3.88.0(graphql@16.14.2)(typescript@5.9.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3)(yjs@13.6.32)
+      '@payloadcms/translations':
+        specifier: 3.88.0
+        version: 3.88.0
+      '@websparks/commande':
+        specifier: workspace:*
+        version: link:../../packages/commande
+      '@websparks/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      graphql:
+        specifier: ^16.11.0
+        version: 16.14.2
+      next:
+        specifier: 16.3.4
+        version: 16.3.4(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4)
+      payload:
+        specifier: 3.88.0
+        version: 3.88.0(graphql@16.14.2)(typescript@5.9.3)
+      react:
+        specifier: 19.2.8
+        version: 19.2.8
+      react-dom:
+        specifier: 19.2.8
+        version: 19.2.8(react@19.2.8)
+      sharp:
+        specifier: 0.35.4
+        version: 0.35.4(@types/node@22.20.1)
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4.3.3
+        version: 4.3.3
+      '@types/node':
+        specifier: ^22.19.1
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.2.5
+        version: 19.2.18
+      '@types/react-dom':
+        specifier: ^19.2.5
+        version: 19.2.5(@types/react@19.2.18)
+      tailwindcss:
+        specifier: ^4.3.3
+        version: 4.3.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/commande:
     dependencies:
       react-dom:

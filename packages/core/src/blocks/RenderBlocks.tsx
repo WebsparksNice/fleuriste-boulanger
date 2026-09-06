@@ -2,6 +2,7 @@ import type { ConfigSiteResolue } from '../config'
 import type { BlocContenu, BlocExterne, ContexteRendu } from '../types'
 import { Contact } from './Contact'
 import { Cta } from './Cta'
+import { Etapes } from './Etapes'
 import { Faq } from './Faq'
 import { Galerie } from './Galerie'
 import { Hero } from './Hero'
@@ -21,6 +22,7 @@ const TYPES_DU_SOCLE = new Set<BlocContenu['blockType']>([
   'temoignages',
   'faq',
   'contact',
+  'etapes',
   'cta',
 ])
 
@@ -91,6 +93,8 @@ export const RenderBlocks = ({ contenu, config, contexte, rendus }: ProprietesRe
             return <Faq key={cle} bloc={bloc} {...commun} />
           case 'contact':
             return <Contact key={cle} bloc={bloc} {...commun} />
+          case 'etapes':
+            return <Etapes key={cle} bloc={bloc} {...commun} />
           case 'cta':
             return <Cta key={cle} bloc={bloc} {...commun} />
           default: {

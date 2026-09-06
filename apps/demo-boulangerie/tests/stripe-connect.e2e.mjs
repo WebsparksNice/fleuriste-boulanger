@@ -177,7 +177,24 @@ const etatSansCompte = await fetch(`${BASE}/api/commande/stripe/etat`, { method:
 verifier('sans compte lié : 409 explicite', etatSansCompte.status === 409, String(etatSansCompte.status))
 
 console.log('\n— Sans compte lié, aucun paiement en ligne —')
-const formulaire = await (await fetch(`${BASE}/commander`)).text()
+
+/*
+ * Le formulaire de commande n'apparaît qu'avec un panier garni : sans article,
+ * il n'y a rien à régler, donc pas de choix de paiement à examiner.
+ */
+const listing = await (await fetch(`${BASE}/nos-pains`)).text()
+const produitId = /name="produit" value="(\d+)"/.exec(listing)?.[1] ?? '1'
+const misAuPanier = await fetch(`${BASE}/api/commande/panier`, {
+  method: 'POST',
+  redirect: 'manual',
+  headers: { 'content-type': 'application/x-www-form-urlencoded' },
+  body: new URLSearchParams({ action: 'definir', produit: produitId, quantite: '1' }),
+})
+const cookiePanier = (misAuPanier.headers.getSetCookie?.() ?? [])
+  .map((entree) => entree.split(';')[0])
+  .find((paire) => paire.startsWith('panier=')) ?? ''
+
+const formulaire = await (await fetch(`${BASE}/commander`, { headers: { cookie: cookiePanier } })).text()
 // React n'ordonne pas les attributs : on isole la balise avant d'en lire la
 // valeur, plutôt que de supposer que `name` et `value` se suivent.
 const modes = [...formulaire.matchAll(/<input[^>]*name="modePaiement"[^>]*>/g)]
@@ -190,7 +207,7 @@ const creneau = [...formulaire.matchAll(/<option value="([^"]+T[^"]+)"/g)][0]?.[
 const force = await fetch(`${BASE}/api/commande`, {
   method: 'POST',
   redirect: 'manual',
-  headers: { 'content-type': 'application/x-www-form-urlencoded' },
+  headers: { cookie: cookiePanier, 'content-type': 'application/x-www-form-urlencoded' },
   body: new URLSearchParams({
     langue: 'fr',
     nom: 'Test Connect',
@@ -198,7 +215,6 @@ const force = await fetch(`${BASE}/api/commande`, {
     email: 'connect@example.com',
     modePaiement: 'en_ligne',
     creneau: creneau ?? '',
-    q_2: '1',
   }),
 })
 const renvoi = new URL(force.headers.get('location')).searchParams.get('erreur')

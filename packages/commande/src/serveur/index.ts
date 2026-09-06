@@ -1,6 +1,14 @@
 export { creerCommandeAvecCreneau } from './creerCommande'
 export type { ClientCommande, DemandeCommande } from './creerCommande'
-export { calculerPanier, listerProduitsCommandables } from './panier'
+export { calculerPanier, listerProduitsCommandables, resoudrePanier } from './panier'
+export type { LignePanier, PanierResolu } from './panier'
+export {
+  NOM_COOKIE_PANIER,
+  compterArticles,
+  ecrirePanier,
+  lirePanier,
+  viderPanier,
+} from './session'
 export { lireReglages } from './reglages'
 export { lireCommerce } from './etablissement'
 export { relation } from './relations'

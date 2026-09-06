@@ -14,6 +14,8 @@ import {
   estPeuple,
   type Langue,
 } from '@websparks/core'
+import type { ChampsProduitCommande } from '@websparks/commande'
+import { BoutonAjouterPanier } from '@websparks/commande/blocks'
 import { notFound } from 'next/navigation'
 
 import { obtenirContexte } from '@/lib/contexte'
@@ -54,6 +56,9 @@ export const FicheProduit = async ({ langue, slug }: { langue: Langue; slug: str
   })
 
   if (!produit) notFound()
+
+  // Les champs de vente viennent du module, que le socle ne connaît pas.
+  const vendable = produit as typeof produit & ChampsProduitCommande
 
   const telephone = contexte.etablissement?.telephone
   const galerie = (produit.galerie ?? []).filter((entree) => estPeuple(entree.image))
@@ -132,6 +137,18 @@ export const FicheProduit = async ({ langue, slug }: { langue: Langue; slug: str
                 </div>
               ) : null}
             </dl>
+
+            {site.modules?.commande && vendable.disponible ? (
+              <BoutonAjouterPanier
+                produit={{
+                  id: produit.id,
+                  nom: produit.nom,
+                  quantiteMaxParCommande: vendable.quantiteMaxParCommande,
+                }}
+                langue={langue}
+                avecQuantite
+              />
+            ) : null}
 
             {telephone ? (
               <a

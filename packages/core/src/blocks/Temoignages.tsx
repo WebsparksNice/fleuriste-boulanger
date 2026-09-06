@@ -1,7 +1,7 @@
 import { Conteneur } from '../components/ui/Conteneur'
 import { Etoiles } from '../components/ui/Etoiles'
 import { Section } from '../components/ui/Section'
-import { Titre } from '../components/ui/Titre'
+import { EnTeteSection } from '../components/ui/EnTeteSection'
 import { obtenirDictionnaire } from '../i18n'
 import { cn } from '../lib/cn'
 import { listerTemoignages } from '../lib/donnees'
@@ -32,7 +32,11 @@ export const Temoignages = async ({
   return (
     <Section apparence={bloc.apparence ?? { fond: 'attenue' }}>
       <Conteneur>
-        <Titre className="mb-8">{bloc.titre ?? t.temoignages.titre}</Titre>
+        <EnTeteSection
+          surtitre={bloc.surtitre}
+          titre={bloc.titre ?? t.temoignages.titre}
+          className="mb-8"
+        />
 
         <ul
           className={cn(

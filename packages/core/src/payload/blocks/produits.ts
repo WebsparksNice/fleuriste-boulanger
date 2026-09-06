@@ -1,6 +1,7 @@
 import type { Block } from 'payload'
 
 import { champApparence } from '../fields/apparence'
+import { champDispositionEntete, champSurtitre } from '../fields/entete'
 import { editeurTexteSimple } from '../editeur'
 import { requisSi } from '../fields/validations'
 
@@ -9,6 +10,7 @@ export const blocProduits: Block = {
   interfaceName: 'BlocProduits',
   labels: { singular: 'Produits', plural: 'Produits' },
   fields: [
+    champSurtitre(),
     {
       name: 'titre',
       type: 'text',
@@ -89,6 +91,20 @@ export const blocProduits: Block = {
       ],
     },
     {
+      name: 'variante',
+      type: 'select',
+      label: 'Presentation des vignettes',
+      defaultValue: 'sobre',
+      options: [
+        { label: 'Sobre : image et nom, sans cadre', value: 'sobre' },
+        { label: 'Carte : sur un fond, avec resume et bouton', value: 'carte' },
+      ],
+      admin: {
+        description:
+          'La presentation « carte » reprend le resume saisi sur chaque produit.',
+      },
+    },
+    {
       type: 'row',
       fields: [
         {
@@ -107,6 +123,7 @@ export const blocProduits: Block = {
         },
       ],
     },
+    champDispositionEntete(),
     champApparence(),
   ],
 }

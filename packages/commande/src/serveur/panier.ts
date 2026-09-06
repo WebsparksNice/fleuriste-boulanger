@@ -63,6 +63,75 @@ export const listerProduitsCommandables = async (
   })
 }
 
+export type LignePanier = {
+  produit: ProduitCommandable
+  quantite: number
+  totalLigneCentimes: number
+}
+
+export type PanierResolu = {
+  lignes: LignePanier[]
+  totalCentimes: number
+  /** Produits du cookie devenus introuvables ou retirés de la vente. */
+  ignores: number
+}
+
+/**
+ * Résout le panier pour l'affichage, sans jamais échouer.
+ *
+ * Un produit retiré de la vente entre deux visites ne doit pas transformer la
+ * page en erreur : la ligne disparaît, le visiteur en est informé, et il garde
+ * le reste de son panier. La validation, elle, reste stricte — c'est
+ * `calculerPanier` qui la porte.
+ */
+export const resoudrePanier = async (
+  payload: Payload,
+  langue: string,
+  quantites: Record<string, number>,
+): Promise<PanierResolu> => {
+  const identifiants = Object.keys(quantites)
+  if (identifiants.length === 0) return { lignes: [], totalCentimes: 0, ignores: 0 }
+
+  const { docs } = await payload.find({
+    collection: 'produits',
+    locale: langue as never,
+    depth: 1,
+    limit: identifiants.length,
+    pagination: false,
+    overrideAccess: true,
+    where: {
+      and: [
+        { id: { in: identifiants } },
+        { _status: { equals: 'published' } },
+        { disponible: { equals: true } },
+      ],
+    },
+  })
+
+  const parIdentifiant = new Map<string, ProduitCommandable>()
+  for (const brut of docs as ProduitBrut[]) {
+    const produit = normaliser(brut)
+    if (produit?.disponible) parIdentifiant.set(String(produit.id), produit)
+  }
+
+  const lignes: LignePanier[] = []
+  let totalCentimes = 0
+
+  for (const [identifiant, quantite] of Object.entries(quantites)) {
+    const produit = parIdentifiant.get(identifiant)
+    if (!produit) continue
+
+    // Le maximum a pu baisser depuis la mise au panier.
+    const retenue = Math.min(quantite, produit.quantiteMaxParCommande)
+    const totalLigneCentimes = produit.prixCentimes * retenue
+
+    totalCentimes += totalLigneCentimes
+    lignes.push({ produit, quantite: retenue, totalLigneCentimes })
+  }
+
+  return { lignes, totalCentimes, ignores: identifiants.length - lignes.length }
+}
+
 /**
  * Recalcule le panier depuis la base.
  *

@@ -2,9 +2,9 @@ import Link from 'next/link'
 
 import { CarteProduit } from '../components/produits/CarteProduit'
 import { Conteneur } from '../components/ui/Conteneur'
+import { EnTeteSection } from '../components/ui/EnTeteSection'
 import { Section } from '../components/ui/Section'
 import { TexteRiche } from '../components/richtext/TexteRiche'
-import { Titre } from '../components/ui/Titre'
 import { lienListeProduits } from '../config'
 import { obtenirDictionnaire } from '../i18n'
 import { cn } from '../lib/cn'
@@ -51,15 +51,28 @@ export const Produits = async ({ bloc, config, contexte }: ProprietesBloc<BlocPr
   return (
     <Section apparence={bloc.apparence}>
       <Conteneur>
-        <div className="mb-8 space-y-3">
-          <Titre>{bloc.titre ?? t.produits.titre}</Titre>
-          <TexteRiche contenu={bloc.intro} config={config} langue={contexte.langue} />
-        </div>
+        <EnTeteSection
+          surtitre={bloc.surtitre}
+          titre={bloc.titre ?? t.produits.titre}
+          intro={
+            bloc.intro ? (
+              <TexteRiche contenu={bloc.intro} config={config} langue={contexte.langue} />
+            ) : null
+          }
+          disposition={bloc.dispositionEntete ?? 'empilee'}
+          className="mb-8"
+        />
 
         {produits.length === 0 ? (
           <p className="text-texte-attenue">{t.produits.aucunProduit}</p>
         ) : (
-          <ul className={cn('grid grid-cols-1 gap-x-6 gap-y-10', classesGrille(colonnes))}>
+          <ul
+            className={cn(
+              'grid grid-cols-1',
+              bloc.variante === 'carte' ? 'gap-6' : 'gap-x-6 gap-y-10',
+              classesGrille(colonnes),
+            )}
+          >
             {produits.map((produit) => (
               <li key={produit.id}>
                 <CarteProduit
@@ -67,7 +80,9 @@ export const Produits = async ({ bloc, config, contexte }: ProprietesBloc<BlocPr
                   config={config}
                   langue={contexte.langue}
                   afficherPrix={bloc.afficherPrix !== false}
+                  variante={bloc.variante ?? 'sobre'}
                   sizes={taillesGrille(colonnes)}
+                  action={contexte.actionProduit?.(produit)}
                 />
               </li>
             ))}

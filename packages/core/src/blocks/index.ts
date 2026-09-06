@@ -1,6 +1,7 @@
 export { RenderBlocks } from './RenderBlocks'
 export { Contact } from './Contact'
 export { Cta } from './Cta'
+export { Etapes } from './Etapes'
 export { Faq } from './Faq'
 export { Galerie } from './Galerie'
 export { Hero } from './Hero'
