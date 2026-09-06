@@ -8,9 +8,16 @@ dist/
 next-env.d.ts
 
 # Environnement
+#
+# Tout fichier d'environnement est ignoré, y compris les copies de travail et
+# les sauvegardes : un « .env.backup » s'est déjà glissé dans l'historique, et
+# le supprimer ensuite n'en efface pas le contenu.
+#
+# Seuls les modèles des apps échappent à la règle : ils ne contiennent que des
+# valeurs d'exemple.
 .env
-.env.local
-.env.*.local
+.env.*
+!apps/*/.env.example
 
 # Médias téléversés : ils vivent sur le volume persistant du serveur,
 # pas dans le dépôt.
