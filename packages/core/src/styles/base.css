@@ -126,11 +126,66 @@
  * a chaque montee de version de Tailwind.
  */
 @layer components {
+  /*
+   * Petites capitales espacees : surtitre de section, mention sous une
+   * vignette. Ecrites ici plutot qu'en utilitaires repetes bloc par bloc — la
+   * graisse et l'interlettrage sont un choix de charte, pas une decision de
+   * mise en page.
+   */
+  .surtitre,
+  .mention {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  .surtitre {
+    letter-spacing: 0.2em;
+    color: var(--color-accent);
+  }
+
+  /*
+   * Prix : un repere de lecture, pas une mention secondaire. Defini ici parce
+   * que le module de commande s'en sert — un paquet partage ne peut pas
+   * dependre d'une classe que seule une app cliente declare.
+   */
+  .prix {
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+
+  /* Numero d'etape : un reperage visuel, pas un titre. */
+  .chiffre-etape {
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--color-accent);
+    margin-block-end: 0.5rem;
+  }
+
+  /*
+   * Sur un aplat de couleur, l'accent n'a plus le contraste qu'il a sur le
+   * fond de page. Ces reperes reprennent alors la couleur du bloc.
+   */
+  .bg-primaire .surtitre,
+  .bg-primaire .chiffre-etape {
+    color: inherit;
+    opacity: 0.8;
+  }
+
   .texte-riche {
     max-width: var(--container-prose);
   }
 
-  .texte-riche > * + * {
+  /*
+   * Le convertisseur de Payload enveloppe le contenu dans un `.payload-richtext`.
+   * Une regle posee sur les seuls enfants directs de `.texte-riche` n'y voit
+   * donc qu'un unique element, et les paragraphes se collent les uns aux
+   * autres : les deux niveaux sont vises.
+   */
+  .texte-riche > * + *,
+  .texte-riche > .payload-richtext > * + * {
     margin-block-start: 1em;
   }
 

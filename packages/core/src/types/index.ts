@@ -1,4 +1,5 @@
 import type { Payload } from 'payload'
+import type { ReactNode } from 'react'
 
 import type { Langue } from '../i18n'
 
@@ -160,6 +161,7 @@ export type ProduitDoc = {
   slug?: string | null
   imagePrincipale?: Reference<MediaDoc> | null
   description?: TexteRiche | null
+  resume?: string | null
   prixIndicatif?: string | null
   disponibilite?: 'permanent' | 'saisonnier' | 'surCommande' | null
   categorie?: Reference<CategorieDoc> | null
@@ -170,6 +172,9 @@ export type ProduitDoc = {
   seo?: MetaSeoDoc | null
   updatedAt?: string | null
 }
+
+/** Vignette nue (defaut) ou posee sur une surface, avec son propre appel a l'action. */
+export type VarianteCarteProduit = 'sobre' | 'carte'
 
 export type TemoignageDoc = {
   id: string | number
@@ -207,6 +212,7 @@ type BaseBloc = {
 
 export type BlocHeroDoc = BaseBloc & {
   blockType: 'hero'
+  surtitre?: string | null
   variante?: 'couverture' | 'lateral' | 'texte' | null
   titre?: string | null
   sousTitre?: string | null
@@ -227,6 +233,7 @@ export type BlocGalerieDoc = BaseBloc & {
 
 export type BlocTexteImageDoc = BaseBloc & {
   blockType: 'texteImage'
+  surtitre?: string | null
   positionImage?: 'gauche' | 'droite' | null
   formatImage?: 'paysage' | 'carre' | 'portrait' | null
   image?: Reference<MediaDoc> | null
@@ -246,6 +253,9 @@ export type BlocHorairesDoc = BaseBloc & {
 
 export type BlocProduitsDoc = BaseBloc & {
   blockType: 'produits'
+  surtitre?: string | null
+  dispositionEntete?: DispositionEntete | null
+  variante?: VarianteCarteProduit | null
   titre?: string | null
   intro?: TexteRiche | null
   mode?: 'misesEnAvant' | 'categorie' | 'selection' | 'tous' | null
@@ -259,6 +269,7 @@ export type BlocProduitsDoc = BaseBloc & {
 
 export type BlocTemoignagesDoc = BaseBloc & {
   blockType: 'temoignages'
+  surtitre?: string | null
   titre?: string | null
   mode?: 'recents' | 'selection' | null
   limite?: number | null
@@ -285,8 +296,22 @@ export type BlocContactDoc = BaseBloc & {
   imageCarte?: Reference<MediaDoc> | null
 }
 
+export type DispositionEntete = 'empilee' | 'repartie'
+
+export type BlocEtapesDoc = BaseBloc & {
+  blockType: 'etapes'
+  surtitre?: string | null
+  titre?: string | null
+  intro?: TexteRiche | null
+  numerotation?: 'chiffres' | 'aucune' | null
+  colonnes?: '2' | '3' | '4' | null
+  dispositionEntete?: DispositionEntete | null
+  elements?: { titre?: string | null; texte?: string | null; id?: string | null }[] | null
+}
+
 export type BlocCtaDoc = BaseBloc & {
   blockType: 'cta'
+  surtitre?: string | null
   titre?: string | null
   texte?: string | null
   boutons?: LienDoc[] | null
@@ -316,6 +341,7 @@ export type BlocContenu =
   | BlocTemoignagesDoc
   | BlocFaqDoc
   | BlocContactDoc
+  | BlocEtapesDoc
   | BlocCtaDoc
 
 /**
@@ -331,4 +357,12 @@ export type ContexteRendu = {
   /** Vrai quand la page est rendue depuis la previsualisation de l'admin. */
   brouillon: boolean
   etablissement: EtablissementDoc | null
+  /**
+   * Action posee sous chaque produit par un module optionnel : ajout au panier,
+   * demande de devis, ce que le module decide.
+   *
+   * Le socle ne sait pas ce qu'elle contient et n'importe rien pour l'afficher ;
+   * absente, les fiches et les vignettes restent purement informatives.
+   */
+  actionProduit?: (produit: ProduitDoc) => ReactNode
 }

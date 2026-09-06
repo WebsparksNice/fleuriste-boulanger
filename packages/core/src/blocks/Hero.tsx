@@ -2,6 +2,7 @@ import { Conteneur } from '../components/ui/Conteneur'
 import { GroupeBoutons } from '../components/ui/Bouton'
 import { ImageMedia } from '../components/media/ImageMedia'
 import { Section } from '../components/ui/Section'
+import { Surtitre } from '../components/ui/Surtitre'
 import { cn } from '../lib/cn'
 import { resoudreLiens } from '../lib/liens'
 import type { BlocHeroDoc } from '../types'
@@ -21,6 +22,7 @@ export const Hero = ({ bloc, config, contexte, premier }: ProprietesBloc<BlocHer
 
   const texte = (
     <div className={cn('max-w-2xl space-y-5', centre && 'mx-auto text-center')}>
+      <Surtitre>{bloc.surtitre}</Surtitre>
       <h1 className="text-4xl sm:text-5xl lg:text-6xl">{bloc.titre}</h1>
       {bloc.sousTitre ? (
         <p className="text-lg text-pretty opacity-90 sm:text-xl">{bloc.sousTitre}</p>

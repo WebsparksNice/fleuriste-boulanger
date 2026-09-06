@@ -495,7 +495,6 @@ EMAIL_EXPEDITEUR=
 const suite = [
   'pnpm install',
   `pnpm --filter ${slug} importmap`,
-  `createdb ${baseDeDonnees}`,
   `pnpm --filter ${slug} types`,
   `pnpm --filter ${slug} migrate:create initial`,
   `pnpm --filter ${slug} migrate`,
@@ -505,7 +504,13 @@ const suite = [
 
 console.log(`  Fait. Module de commande : ${avecCommande ? 'activé' : 'absent'}`)
 console.log(`  Allergènes sur les produits : ${METIERS[metier].allergenes ? 'oui' : 'non'}\n`)
-console.log('  Reste à faire — ces étapes ont besoin de la base de données :\n')
+console.log(`  D'abord, une base de données joignable, et son adresse dans
+  apps/${slug}/.env :
+
+    hébergée (Supabase, Neon, base gérée)  la base existe déjà, rien à créer
+    Postgres local                         createdb ${baseDeDonnees}
+
+  Puis :\n`)
 for (const commande of suite) console.log(`    ${commande}`)
 console.log(`
   Puis :

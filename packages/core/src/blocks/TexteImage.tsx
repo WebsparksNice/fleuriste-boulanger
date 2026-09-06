@@ -3,6 +3,7 @@ import { GroupeBoutons } from '../components/ui/Bouton'
 import { ImageMedia } from '../components/media/ImageMedia'
 import { Section } from '../components/ui/Section'
 import { TexteRiche } from '../components/richtext/TexteRiche'
+import { Surtitre } from '../components/ui/Surtitre'
 import { Titre } from '../components/ui/Titre'
 import { cn } from '../lib/cn'
 import { resoudreLiens } from '../lib/liens'
@@ -31,6 +32,7 @@ export const TexteImage = ({ bloc, config, contexte, premier }: ProprietesBloc<B
             className={cn('rounded-lg bg-surface-attenuee', imageAGauche && 'lg:order-first')}
           />
           <div className="space-y-4">
+            <Surtitre>{bloc.surtitre}</Surtitre>
             {bloc.titre ? <Titre>{bloc.titre}</Titre> : null}
             <TexteRiche contenu={bloc.texte} config={config} langue={contexte.langue} />
             <GroupeBoutons liens={boutons} />

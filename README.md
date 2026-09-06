@@ -226,6 +226,28 @@ Attention : sur l'écran de sélection, *Ignorer ce formulaire* ne concerne que
 la création d'un compte. Si vous sélectionnez un compte existant qui n'a jamais
 terminé son inscription, il restera inapte à encaisser.
 
+## Le panier
+
+Le visiteur ajoute ses articles au fil de sa visite, puis commande depuis la
+page dédiée ou depuis le bloc « commande en ligne » posé dans une page.
+
+Le panier tient dans un **cookie**, et ne contient que des identifiants de
+produits et des quantités — jamais un prix, jamais un total. Un cookie se
+fabrique à la main : celui-ci ne doit donner aucune prise. Les montants restent
+relus en base à la validation, et une quantité forgée y est refusée.
+
+Cookie plutôt que stockage navigateur, parce que le panier doit être lisible
+pendant le rendu côté serveur : autrement, l'afficher demanderait du
+JavaScript. Chaque bouton « ajouter », « mettre à jour » et « retirer » est un
+formulaire HTML qui poste et redirige.
+
+**Conséquence à connaître** : le compteur d'articles en en-tête lit ce cookie,
+ce qui rend toutes les pages dynamiques pour les clients qui activent le
+module. Un compteur juste ne peut pas sortir d'une page mise en cache pour tout
+le monde. Les clients sans module de commande conservent leurs pages
+prégénérées. Pour retrouver le rendu statique au prix du compteur, il suffit de
+retirer `IndicateurPanier` de `actionsEnTete` dans le gabarit de l'app.
+
 ## Commandes : ce sur quoi reposent les garanties
 
 - **Les créneaux sont calculés côté serveur**, par la même fonction à
@@ -275,6 +297,7 @@ même droplet, Cloudflare devant en DNS/CDN uniquement.
 | `pnpm --filter <app> types` | régénère `payload-types.ts` |
 | `pnpm --filter <app> importmap` | régénère l'import map de l'admin |
 | `pnpm --filter @websparks/commande test` | tests unitaires des créneaux et du fuseau |
+| `pnpm --filter <app> test:panier` | panier, serveur en marche requis |
 | `pnpm --filter <app> test:e2e` | parcours de commande, serveur en marche requis |
 | `pnpm --filter <app> test:stripe` | liaison Stripe Connect, serveur en marche requis |
 | `pnpm --filter <app> test:webhook` | webhooks signés localement, serveur en marche requis |

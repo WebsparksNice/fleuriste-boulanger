@@ -23,24 +23,72 @@ const verifier = (nom, condition, detail = '') => {
 }
 
 const creneauxDisponibles = async () => {
-  const html = await (await fetch(`${BASE}/commander`)).text()
+  // Le choix du créneau n'apparaît qu'avec un panier garni : sans article,
+  // il n'y a rien à retirer, donc pas de formulaire de commande.
+  const html = await (await fetch(`${BASE}/commander`, { headers: { cookie: cookiePanier } })).text()
   const options = [...html.matchAll(/<option value="([^"]+)"([^>]*)>([^<]*)<\/option>/g)]
   return options
     .filter(([, valeur, attributs]) => valeur.includes('T') && !attributs.includes('disabled'))
     .map(([, valeur, , texte]) => ({ cle: valeur, texte: texte.trim() }))
 }
 
-const produits = async () => {
-  const html = await (await fetch(`${BASE}/commander`)).text()
-  return [...html.matchAll(/<input[^>]*id="(q_(\d+))"[^>]*>/g)].map(([balise, champ, id]) => ({
-    champ,
-    id,
-    max: Number(/max="(\d+)"/.exec(balise)?.[1] ?? '0'),
-    nom: /aria-label="Quantité pour ([^"]+)"/.exec(balise)?.[1] ?? '',
-  }))
+/*
+ * Le panier vit dans un cookie : on en tient un ici, comme le ferait un
+ * navigateur. Les quantités ne transitent plus par le formulaire de commande.
+ */
+let cookiePanier = ''
+
+const memoriser = (reponse) => {
+  for (const entree of reponse.headers.getSetCookie?.() ?? []) {
+    if (entree.startsWith('panier=')) cookiePanier = entree.split(';')[0]
+  }
 }
 
-const commander = async (champs) => {
+const produits = async () => {
+  const html = await (await fetch(`${BASE}/nos-pains`)).text()
+  return [...html.matchAll(/<form[^>]*action="\/api\/commande\/panier"[\s\S]*?<\/form>/g)].flatMap(
+    (bloc) => {
+      const id = /name="produit" value="(\d+)"/.exec(bloc[0])?.[1]
+      const nom = /Ajouter ([^"]+) au panier|— ([^<]+)<\/span>/.exec(bloc[0])
+      return id ? [{ id, nom: (nom?.[1] ?? nom?.[2] ?? '').trim() }] : []
+    },
+  )
+}
+
+const mettreAuPanier = async (produitId, quantite) => {
+  const reponse = await fetch(`${BASE}/api/commande/panier`, {
+    method: 'POST',
+    redirect: 'manual',
+    headers: { cookie: cookiePanier, 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ action: 'definir', produit: String(produitId), quantite: String(quantite) }),
+  })
+  memoriser(reponse)
+  return reponse
+}
+
+const viderLePanier = async () => {
+  const reponse = await fetch(`${BASE}/api/commande/panier`, {
+    method: 'POST',
+    redirect: 'manual',
+    headers: { cookie: cookiePanier, 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ action: 'vider' }),
+  })
+  memoriser(reponse)
+  cookiePanier = ''
+}
+
+const commander = async ({ panier, cookie, ...champs } = {}) => {
+  // `cookie` permet de forger un panier a la main, ou d'isoler des appels
+  // concurrents qui ne doivent pas se partager le meme bocal.
+  let jeton = cookie
+  if (jeton === undefined) {
+    await viderLePanier()
+    for (const [produitId, quantite] of Object.entries(panier ?? {})) {
+      await mettreAuPanier(produitId, quantite)
+    }
+    jeton = cookiePanier
+  }
+
   const corps = new URLSearchParams({
     langue: 'fr',
     nom: 'Claude Test',
@@ -53,8 +101,9 @@ const commander = async (champs) => {
     method: 'POST',
     body: corps,
     redirect: 'manual',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    headers: { cookie: jeton, 'content-type': 'application/x-www-form-urlencoded' },
   })
+  memoriser(reponse)
   const destination = reponse.headers.get('location') ?? ''
   const url = destination ? new URL(destination) : null
   return {
@@ -69,13 +118,14 @@ const commander = async (champs) => {
   }
 }
 
-const liste = await creneauxDisponibles()
 const articles = await produits()
+await mettreAuPanier(articles[0].id, 1)
+const liste = await creneauxDisponibles()
 console.log(`\nCréneaux libres : ${liste.length} — produits commandables : ${articles.length}\n`)
 
 console.log('— Commande nominale —')
 const baguette = articles[1]
-const r1 = await commander({ creneau: liste[0].cle, [baguette.champ]: '2' })
+const r1 = await commander({ creneau: liste[0].cle, panier: { [baguette.id]: 2 } })
 verifier('redirection 303', r1.statut === 303, `reçu ${r1.statut}`)
 verifier('mène à la confirmation', r1.succes, r1.url)
 verifier('numéro attribué', /^\d{8}-[A-Z2-9]{4}$/.test(r1.numero ?? ''), r1.numero ?? '')
@@ -89,7 +139,7 @@ verifier('montant recalculé (2 × 1,30 €)', confirmation.includes('2,60') || 
 console.log('\n— Le navigateur ne fixe pas les prix —')
 const r2 = await commander({
   creneau: liste[1].cle,
-  [baguette.champ]: '1',
+  panier: { [baguette.id]: 1 },
   prix: '0.01',
   totalCentimes: '1',
   total: '1',
@@ -101,35 +151,38 @@ verifier('total ignoré au profit de la base', conf2.includes('1,30'), 'prix for
 console.log('\n— Créneau forgé —')
 const forge = new Date(Date.now() + 3 * 3600_000)
 forge.setUTCSeconds(7, 0)
-const r3 = await commander({ creneau: forge.toISOString(), [baguette.champ]: '1' })
+const r3 = await commander({ creneau: forge.toISOString(), panier: { [baguette.id]: 1 } })
 verifier('refusé', !r3.succes && r3.erreur === 'creneau_invalide', r3.erreur ?? '')
-verifier('le panier revient dans l’URL', r3.panier !== null, r3.panier ?? '')
+// Le panier reste dans le cookie : nul besoin de le faire voyager dans l'URL.
+verifier('le panier est conservé', cookiePanier.includes(`${baguette.id}x1`), cookiePanier)
 
 console.log('\n— Délai de préparation du produit —')
 const galette = articles[5]
-const r4 = await commander({ creneau: liste[0].cle, [galette.champ]: '1' })
+const r4 = await commander({ creneau: liste[0].cle, panier: { [galette.id]: 1 } })
 verifier('créneau trop proche refusé (24 h de préparation)', r4.erreur === 'creneau_trop_tot', r4.erreur ?? '')
 const tardif = liste[liste.length - 1]
-const r5 = await commander({ creneau: tardif.cle, [galette.champ]: '1' })
+const r5 = await commander({ creneau: tardif.cle, panier: { [galette.id]: 1 } })
 verifier('créneau lointain accepté', r5.succes, r5.erreur ?? '')
 
-console.log('\n— Quantité maximum —')
-const r6 = await commander({ creneau: liste[2].cle, [baguette.champ]: String(baguette.max + 1) })
+console.log('\n— Quantité maximum, par un cookie forgé —')
+// Le panier plafonne déjà les quantités ; on court-circuite l'interface pour
+// vérifier que la validation de commande ne s'en remet pas à lui.
+const r6 = await commander({ creneau: liste[2].cle, cookie: `panier=${baguette.id}x999` })
 verifier('au-delà du maximum, refusé', r6.erreur === 'quantite_invalide', r6.erreur ?? '')
 verifier('le message nomme le produit', (r6.detail ?? '').includes('maximum'), r6.detail ?? '')
 
 console.log('\n— Panier vide —')
-const r7 = await commander({ creneau: liste[3].cle })
+const r7 = await commander({ creneau: liste[3].cle, cookie: '' })
 verifier('refusé', r7.erreur === 'panier_vide', r7.erreur ?? '')
 
 console.log('\n— Coordonnées invalides —')
 const corpsInvalide = new URLSearchParams({
   langue: 'fr', nom: 'X', telephone: 'abc', email: 'pas-un-email',
-  modePaiement: 'sur_place', creneau: liste[4].cle, [baguette.champ]: '1',
+  modePaiement: 'sur_place', creneau: liste[4].cle,
 })
 const r8 = await fetch(`${BASE}/api/commande`, {
   method: 'POST', body: corpsInvalide, redirect: 'manual',
-  headers: { 'content-type': 'application/x-www-form-urlencoded' },
+  headers: { cookie: `panier=${baguette.id}x1`, 'content-type': 'application/x-www-form-urlencoded' },
 })
 verifier('refusé', new URL(r8.headers.get('location')).searchParams.get('erreur') === 'coordonnees_invalides')
 
@@ -137,7 +190,9 @@ console.log('\n— Concurrence sur un créneau (capacité 3) —')
 const cible = liste[Math.floor(liste.length / 2)]
 const tentatives = await Promise.all(
   Array.from({ length: 10 }, (_, i) =>
-    commander({ creneau: cible.cle, [baguette.champ]: '1', nom: `Client ${i}` }),
+    // Chaque tentative porte son propre panier : un bocal partagé fausserait
+    // la course en se réécrivant d'un appel à l'autre.
+    commander({ creneau: cible.cle, cookie: `panier=${baguette.id}x1`, nom: `Client ${i}` }),
   ),
 )
 const reussies = tentatives.filter((t) => t.succes)

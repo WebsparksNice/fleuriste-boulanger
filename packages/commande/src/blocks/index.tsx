@@ -1,5 +1,5 @@
 import type { ProprietesBloc, RegistreBlocs } from '@websparks/core/blocks'
-import type { BlocExterne } from '@websparks/core'
+import type { BlocExterne, TexteRiche } from '@websparks/core'
 
 import { FormulaireCommande } from './FormulaireCommande'
 
@@ -15,6 +15,11 @@ export const BlocCommande = ({ bloc, config, contexte }: ProprietesBloc<BlocExte
     config={config}
     contexte={contexte}
     titre={typeof bloc.titre === 'string' ? bloc.titre : null}
+    intro={(bloc.intro as TexteRiche | null | undefined) ?? null}
+    // Fond, espacement et ancre saisis dans l'admin : sans ce passage, les
+    // reglages du bloc restaient sans effet sur la page.
+    apparence={bloc.apparence}
+    niveau={2}
   />
 )
 
@@ -27,3 +32,6 @@ export { FormulaireCommande } from './FormulaireCommande'
 export { CHEMIN_ENVOI_COMMANDE } from '../chemins'
 export { PageConfirmationCommande } from './PageConfirmation'
 export { decoderPanier, encoderPanier } from './panierUrl'
+export { BoutonAjouterPanier } from './BoutonAjouterPanier'
+export { ResumePanier } from './ResumePanier'
+export { IndicateurPanier } from './IndicateurPanier'

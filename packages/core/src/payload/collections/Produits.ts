@@ -115,6 +115,17 @@ export const Produits = ({
               required: true,
             }),
             {
+              name: 'resume',
+              type: 'textarea',
+              label: 'Resume',
+              localized: true,
+              maxLength: 220,
+              admin: {
+                description:
+                  'Une ou deux phrases, affichees sur la vignette en vitrine. La description complete, elle, reste sur la fiche.',
+              },
+            },
+            {
               name: 'description',
               type: 'richText',
               label: 'Description',

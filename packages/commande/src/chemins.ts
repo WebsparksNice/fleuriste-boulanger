@@ -9,6 +9,7 @@
  */
 export const CHEMIN_ENVOI_COMMANDE = '/api/commande'
 export const CHEMIN_STATUT_COMMANDE = '/api/commande/statut'
+export const CHEMIN_PANIER = '/api/commande/panier'
 export const CHEMIN_WEBHOOK_STRIPE = '/api/commande/webhook-stripe'
 export const CHEMIN_CONNEXION_STRIPE = '/api/commande/stripe/connexion'
 export const CHEMIN_RETOUR_STRIPE = '/api/commande/stripe/retour'

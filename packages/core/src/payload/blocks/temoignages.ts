@@ -1,6 +1,7 @@
 import type { Block } from 'payload'
 
 import { champApparence } from '../fields/apparence'
+import { champSurtitre } from '../fields/entete'
 import { requisSi } from '../fields/validations'
 
 export const blocTemoignages: Block = {
@@ -8,6 +9,7 @@ export const blocTemoignages: Block = {
   interfaceName: 'BlocTemoignages',
   labels: { singular: 'Temoignages', plural: 'Temoignages' },
   fields: [
+    champSurtitre(),
     {
       name: 'titre',
       type: 'text',

@@ -1,6 +1,7 @@
 import type { Block } from 'payload'
 
 import { champApparence } from '../fields/apparence'
+import { champSurtitre } from '../fields/entete'
 import { champLiens } from '../fields/lien'
 
 export const blocCta: Block = {
@@ -8,6 +9,7 @@ export const blocCta: Block = {
   interfaceName: 'BlocCta',
   labels: { singular: 'Appel a l action', plural: 'Appels a l action' },
   fields: [
+    champSurtitre(),
     {
       name: 'titre',
       type: 'text',

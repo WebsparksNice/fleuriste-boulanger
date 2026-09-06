@@ -3,6 +3,7 @@ import type { Block } from 'payload'
 import { champApparence } from '../fields/apparence'
 import { champImage } from '../fields/media'
 import { champLiens } from '../fields/lien'
+import { champSurtitre } from '../fields/entete'
 import { editeurTexteRiche } from '../editeur'
 
 export const blocTexteImage: Block = {
@@ -39,6 +40,7 @@ export const blocTexteImage: Block = {
       ],
     },
     champImage({ required: true }),
+    champSurtitre(),
     {
       name: 'titre',
       type: 'text',

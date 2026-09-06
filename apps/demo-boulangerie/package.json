@@ -16,7 +16,8 @@
     "test:e2e": "node tests/commande.e2e.mjs",
     "test:vue-commandes": "payload run tests/vue-commandes.mjs",
     "test:stripe": "node tests/stripe-connect.e2e.mjs",
-    "test:webhook": "payload run tests/webhook-stripe.e2e.mjs"
+    "test:webhook": "payload run tests/webhook-stripe.e2e.mjs",
+    "test:panier": "node tests/panier.e2e.mjs"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.88.0",

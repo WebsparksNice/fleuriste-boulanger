@@ -3,6 +3,7 @@ import type { Block } from 'payload'
 import { champApparence } from '../fields/apparence'
 import { champImage } from '../fields/media'
 import { champLiens } from '../fields/lien'
+import { champSurtitre } from '../fields/entete'
 
 export const blocHero: Block = {
   slug: 'hero',
@@ -22,6 +23,7 @@ export const blocHero: Block = {
         { label: 'Texte seul, sans image', value: 'texte' },
       ],
     },
+    champSurtitre(),
     {
       name: 'titre',
       type: 'text',

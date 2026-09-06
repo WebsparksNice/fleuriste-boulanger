@@ -1,36 +1,25 @@
 import { lienCommande } from '@websparks/core'
 import { getPayload } from 'payload'
 
-import { encoderPanier } from '../blocks/panierUrl'
 import type { ModuleCommande } from '../config'
 import { creerCommandeAvecCreneau } from '../serveur/creerCommande'
 import { envoyerEmailsCommande } from '../serveur/envoi'
+import { lirePanier, viderPanier } from '../serveur/session'
 import { creerSessionCheckout, clientStripe } from '../serveur/stripe'
 import type { LigneDemandee } from '../serveur/types'
 
 export const SEGMENT_CONFIRMATION = 'confirmation'
 
-const PREFIXE_QUANTITE = 'q_'
-
-/** Extrait les couples produit/quantité du formulaire. */
-const lireLignes = (donnees: FormData): { lignes: LigneDemandee[]; quantites: Record<string, number> } => {
-  const lignes: LigneDemandee[] = []
-  const quantites: Record<string, number> = {}
-
-  for (const [champ, valeur] of donnees.entries()) {
-    if (!champ.startsWith(PREFIXE_QUANTITE)) continue
-
-    const produitId = champ.slice(PREFIXE_QUANTITE.length)
-    const quantite = Number(valeur)
-
-    if (!Number.isInteger(quantite) || quantite <= 0) continue
-
-    lignes.push({ produitId, quantite })
-    quantites[produitId] = quantite
-  }
-
-  return { lignes, quantites }
-}
+/**
+ * Lignes de la commande, lues dans le panier du visiteur.
+ *
+ * Le formulaire de commande ne porte plus de quantités : elles vivent dans le
+ * cookie de panier, alimenté au fil de la visite. Cela ne change rien à la
+ * règle de fond — le cookie ne donne que des identifiants et des quantités, et
+ * les prix restent relus en base.
+ */
+const lireLignes = async (): Promise<LigneDemandee[]> =>
+  Object.entries(await lirePanier()).map(([produitId, quantite]) => ({ produitId, quantite }))
 
 const texte = (donnees: FormData, champ: string): string => {
   const valeur = donnees.get(champ)
@@ -53,17 +42,17 @@ export const creerRoutePostCommande = (module: ModuleCommande) => {
 
     const langue = texte(donnees, 'langue') || site.langueParDefaut
     const cheminFormulaire = lienCommande(site, langue as never)
-    const { lignes, quantites } = lireLignes(donnees)
+    const lignes = await lireLignes()
 
     const versFormulaire = (erreur: string, detail?: string): Response => {
       const parametres = new URLSearchParams({ erreur })
       if (detail) parametres.set('detail', detail)
 
-      const panier = encoderPanier(quantites)
-      if (panier) parametres.set('panier', panier)
-
-      // 303 : le navigateur repasse en GET, un rafraîchissement ne renvoie donc
-      // pas le formulaire une seconde fois.
+      /*
+       * 303 : le navigateur repasse en GET, un rafraîchissement ne renvoie donc
+       * pas le formulaire une seconde fois. Le panier n'a pas besoin de voyager
+       * dans l'URL — il est resté dans le cookie, intact.
+       */
       return Response.redirect(`${site.urlSite}${cheminFormulaire}?${parametres}`, 303)
     }
 
@@ -90,6 +79,9 @@ export const creerRoutePostCommande = (module: ModuleCommande) => {
     })
 
     if (!resultat.ok) return versFormulaire(resultat.erreur, resultat.details)
+
+    // La commande existe et sa place est réservée : le panier a fait son office.
+    await viderPanier()
 
     const { commande, reglages, panier } = resultat
     const urlConfirmation = `${site.urlSite}${cheminFormulaire}/${SEGMENT_CONFIRMATION}?numero=${encodeURIComponent(commande.numero)}&jeton=${encodeURIComponent(commande.jeton)}`

@@ -1,6 +1,8 @@
 export { Conteneur } from './ui/Conteneur'
 export { Section } from './ui/Section'
 export { Titre } from './ui/Titre'
+export { Surtitre } from './ui/Surtitre'
+export { EnTeteSection } from './ui/EnTeteSection'
 export { Bouton, GroupeBoutons } from './ui/Bouton'
 export { Etoiles } from './ui/Etoiles'
 export { ImageMedia } from './media/ImageMedia'

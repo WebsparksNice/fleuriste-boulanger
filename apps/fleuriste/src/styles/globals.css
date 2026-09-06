@@ -1,0 +1,248 @@
+@import 'tailwindcss';
+@import '@websparks/core/styles.css';
+
+/*
+ * Tailwind v4 detecte les classes dans les fichiers du projet. Le socle et les
+ * modules vivant dans d'autres paquets du monorepo, il faut les lui indiquer
+ * explicitement, sans quoi leurs classes seraient absentes du CSS final.
+ *
+ * Une ligne par paquet, chemin complet : un globe de repertoires ne resout
+ * rien ici et fait echouer le scan en silence. Ajouter un module sans ajouter
+ * sa ligne ne casse pas la compilation — la page sort simplement sans mise en
+ * forme, ce qui se remarque bien plus tard.
+ */
+@source '../../../../packages/core/src';
+@source '../../../../packages/commande/src';
+
+/*
+ * Charte du client, la ou les jetons ne suffisent pas.
+ *
+ * Le gros du theme passe par `site.config.ts`. Restent ici les endroits ou le
+ * socle fige la classe utilisee, et ou la charte demande autre chose :
+ *   - l'en-tete et le pied de page sont des aplats vert profond, quand le socle
+ *     les pose sur le fond de page et la surface attenuee ;
+ *   - le bouton d'action est terracotta, quand le socle reprend la primaire —
+ *     laquelle reste le vert, puisqu'elle sert aussi aux aplats de section.
+ *
+ * Ces regles sont volontairement hors de toute couche : les utilitaires
+ * Tailwind vivent dans `utilities`, qui l'emporte sur `components` quelle que
+ * soit la specificite. Non layeree, une regle passe devant. La seule exception
+ * est la couleur des titres, placee dans `base` pour qu'un `text-*` pose par le
+ * socle continue de gagner (le blanc casse d'un titre sur aplat vert).
+ */
+
+:root {
+  /* Declinaisons posees sur l'aplat vert, absentes des jetons du socle. */
+  --c-sur-vert: #f7f4ed;
+  --c-sur-vert-attenue: #b7c7bc;
+  --c-bordure-sur-vert: #2f5341;
+  --c-accent-survol: #8c4823;
+  /*
+   * Le terracotta de la charte tient le contraste en aplat (texte clair pose
+   * dessus), mais pas en texte sur le sauge : 3.87:1, sous le seuil de 4.5:1.
+   * Meme teinte, un cran plus sombre, reservee aux liens et aux prix.
+   */
+  --c-accent-texte: #934c26;
+}
+
+/* Titres en vert profond, sauf la ou ils reposent deja sur un aplat. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--c-primaire);
+    /* Le dessin « affiche » de Fraunces : empattements plus francs. */
+    font-variation-settings: 'opsz' 48;
+  }
+
+  /* Les grands titres se resserrent : Fraunces respire deja beaucoup. */
+  h1,
+  h2 {
+    letter-spacing: -0.018em;
+  }
+
+  .bg-primaire :is(h1, h2, h3, h4, h5, h6),
+  header :is(h1, h2, h3, h4, h5, h6),
+  footer :is(h1, h2, h3, h4, h5, h6) {
+    color: inherit;
+  }
+}
+
+/*
+ * Une carte doit se detacher de la section qui la porte. Sur le fond dominant,
+ * elle est en sauge ; sur une section deja en sauge, elle repasse en blanc
+ * casse. Sans cette inversion, les temoignages et les panneaux de commande
+ * disparaitraient dans leur propre section.
+ */
+.bg-surface-attenuee .bg-surface {
+  background-color: var(--c-fond);
+}
+
+/* --- Aplat vert : en-tete --- */
+
+header.sticky {
+  background-color: var(--c-primaire);
+  color: var(--c-sur-vert);
+  border-bottom-color: var(--c-bordure-sur-vert);
+}
+
+header.sticky .border-bordure {
+  border-color: var(--c-bordure-sur-vert);
+}
+
+header.sticky .text-texte-attenue {
+  color: var(--c-sur-vert-attenue);
+}
+
+/*
+ * Navigation : sauge au repos, blanc casse au survol. Le contraste du sauge
+ * sur le vert profond (9.6:1) laisse la marge necessaire pour que le lien
+ * survole se distingue sans devenir criard.
+ */
+header.sticky nav a {
+  color: #dce4d7;
+}
+
+header.sticky nav a:hover {
+  color: var(--c-sur-vert);
+}
+
+/*
+ * Le lien « Commander » pose par le gabarit du site est l'action principale de
+ * l'en-tete : il se rend en aplat terracotta, pas en contour. Regle ici et non
+ * dans le gabarit, pour que l'app ne porte pas de mise en forme propre.
+ */
+header.sticky .border-primaire.text-primaire {
+  background-color: var(--c-accent);
+  border-color: transparent;
+  color: var(--c-primaire-contraste);
+  transition: background-color 0.25s ease;
+}
+
+header.sticky .border-primaire.text-primaire:hover {
+  background-color: var(--c-accent-survol);
+}
+
+/*
+ * Le panneau du menu mobile est une surface claire posee sur l'aplat : il
+ * reprend les couleurs de page, sans quoi il heriterait du texte clair.
+ */
+header.sticky nav.bg-surface {
+  color: var(--c-texte);
+  border-color: var(--c-bordure);
+}
+
+header.sticky nav.bg-surface .border-bordure {
+  border-color: var(--c-bordure);
+}
+
+header.sticky nav.bg-surface .text-texte-attenue {
+  color: var(--c-texte-attenue);
+}
+
+/* Ses liens quittent le sauge de la navigation, sauf le bouton d'action. */
+header.sticky nav.bg-surface a:not(.bg-primaire) {
+  color: var(--c-texte);
+}
+
+/* --- Aplat vert : pied de page --- */
+
+footer.mt-auto {
+  background-color: var(--c-primaire);
+  color: var(--c-sur-vert);
+  border-top-color: var(--c-bordure-sur-vert);
+}
+
+footer.mt-auto .text-texte-attenue {
+  color: var(--c-sur-vert-attenue);
+}
+
+footer.mt-auto .border-bordure {
+  border-color: var(--c-bordure-sur-vert);
+}
+
+/* `divide-*` porte la couleur sur les enfants, pas sur le conteneur. */
+footer.mt-auto .divide-bordure > * {
+  border-color: var(--c-bordure-sur-vert);
+}
+
+/*
+ * Le contour de focus du socle est en primaire : invisible sur l'aplat vert.
+ */
+header.sticky :focus-visible,
+footer.mt-auto :focus-visible,
+.bg-primaire :focus-visible {
+  outline-color: var(--c-sur-vert);
+}
+
+/* --- Terracotta : appels a l'action, prix, liens actifs --- */
+
+/*
+ * Seuls les liens et boutons prennent le terracotta : les sections `primaire`
+ * portent la meme classe sur un `<section>` et restent des aplats verts.
+ */
+a.bg-primaire,
+button.bg-primaire {
+  background-color: var(--c-accent);
+  color: var(--c-primaire-contraste);
+}
+
+a.bg-primaire:hover,
+button.bg-primaire:hover {
+  background-color: var(--c-accent-survol);
+}
+
+/* Liens du contenu redige dans l'editeur. */
+.texte-riche a {
+  color: var(--c-accent-texte);
+}
+
+/* Sur aplat, le contenu redige suit la couleur du bloc (regle du socle). */
+.bg-primaire .texte-riche a,
+footer.mt-auto .texte-riche a {
+  color: inherit;
+}
+
+/* Prix : repere de lecture, pas une simple mention secondaire. */
+.prix {
+  color: var(--c-accent-texte);
+  font-weight: 500;
+}
+
+/* --- Saisie --- */
+
+/*
+ * Les champs gardent le fond dominant, y compris sur une section en sauge :
+ * une zone de saisie doit se lire comme un creux dans la page, pas se fondre
+ * dans l'aplat qui la porte.
+ */
+input:not([type='radio']):not([type='checkbox']),
+select,
+textarea {
+  background-color: var(--c-fond);
+}
+
+/*
+ * Le contour de focus du socle double le trait d'un champ deja borde : la
+ * bordure prend l'accent a la place.
+ *
+ * Les cases et boutons radio en sont exclus : ils n'ont pas de bordure a
+ * recolorer, et leur retirer le contour les laissait sans le moindre repere de
+ * focus au clavier.
+ */
+input:not([type='radio']):not([type='checkbox']):focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--c-accent);
+  box-shadow: inset 0 0 0 1px var(--c-accent);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--c-texte-attenue);
+  opacity: 0.7;
+}
